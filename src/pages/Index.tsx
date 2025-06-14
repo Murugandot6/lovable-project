@@ -155,10 +155,10 @@ const Index = () => {
             </div>
 
             {/* Main Content - Google-style layout */}
-            <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
               {/* Logo with Google Colors */}
-              <div className="mb-8 text-center">
-                <h1 className="text-8xl md:text-9xl font-normal mb-4 tracking-tight">
+              <div className="mb-6 sm:mb-8 text-center">
+                <h1 className="text-6xl sm:text-8xl md:text-9xl font-normal mb-2 sm:mb-4 tracking-tight">
                   <span className="text-blue-500">a</span>
                   <span className="text-red-500">n</span>
                   <span className="text-yellow-500">b</span>
@@ -166,35 +166,35 @@ const Index = () => {
                   <span className="text-green-500">e</span>
                 </h1>
                 <div className="flex items-center justify-center">
-                  <Heart className="text-pink-500 dark:text-pink-400 mr-2" size={24} />
-                  <p className="text-lg text-gray-600 dark:text-gray-400">
+                  <Heart className="text-pink-500 dark:text-pink-400 mr-2" size={20} />
+                  <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400">
                     Grievance Portal
                   </p>
                 </div>
               </div>
 
               {/* Search Bar with Typing Animation */}
-              <div className="w-full max-w-xl mb-8">
+              <div className="w-full max-w-sm sm:max-w-xl mb-6 sm:mb-8">
                 <div className="relative">
-                  <div className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-base min-h-[48px] flex items-center">
-                    <span className="flex-1">{displayText}</span>
+                  <div className="w-full px-3 sm:px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm sm:text-base min-h-[44px] sm:min-h-[48px] flex items-center">
+                    <span className="flex-1 truncate">{displayText}</span>
                     <span className="animate-pulse text-gray-400">|</span>
                   </div>
                 </div>
               </div>
 
               {/* Buttons */}
-              <div className="flex flex-row gap-2 sm:gap-4 justify-center">
+              <div className="flex flex-row gap-3 sm:gap-4 justify-center">
                 <Button 
                   onClick={() => setCurrentView('login')}
-                  className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded border border-gray-300 dark:border-gray-600 font-normal shadow-sm hover:shadow-md transition-all duration-200"
+                  className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 sm:px-6 py-2 rounded border border-gray-300 dark:border-gray-600 font-normal shadow-sm hover:shadow-md transition-all duration-200 text-sm sm:text-base"
                   variant="outline"
                 >
                   Login
                 </Button>
                 <Button 
                   onClick={() => setCurrentView('register')}
-                  className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded border border-gray-300 dark:border-gray-600 font-normal shadow-sm hover:shadow-md transition-all duration-200"
+                  className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 sm:px-6 py-2 rounded border border-gray-300 dark:border-gray-600 font-normal shadow-sm hover:shadow-md transition-all duration-200 text-sm sm:text-base"
                   variant="outline"
                 >
                   Register
@@ -203,9 +203,9 @@ const Index = () => {
             </div>
 
             {/* Footer */}
-            <footer className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4">
+            <footer className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-3 sm:py-4">
               <div className="container mx-auto px-4 text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Built with love for better communication
                 </p>
               </div>

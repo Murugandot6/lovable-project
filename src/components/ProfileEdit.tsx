@@ -70,22 +70,22 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center py-8">
-      <div className="container mx-auto px-4 max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="container mx-auto px-4 max-w-sm sm:max-w-md w-full">
         <Card className="bg-white/90 backdrop-blur-sm border-pink-200 shadow-xl">
-          <CardHeader className="text-center pb-6">
-            <div className="mx-auto bg-pink-100 w-20 h-20 rounded-full flex items-center justify-center mb-4 border-4 border-pink-200">
-              <Heart className="text-red-500" size={32} />
+          <CardHeader className="text-center pb-4 sm:pb-6">
+            <div className="mx-auto bg-pink-100 w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-3 sm:mb-4 border-4 border-pink-200">
+              <Heart className="text-red-500" size={24} />
             </div>
-            <CardTitle className="text-2xl font-bold text-pink-600">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-pink-600">
               👤 Edit Your Profile
             </CardTitle>
           </CardHeader>
           
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <CardContent className="px-4 sm:px-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="nickname" className="text-gray-700 flex items-center">
+                <Label htmlFor="nickname" className="text-gray-700 flex items-center text-sm sm:text-base">
                   <span className="mr-2">👤</span>
                   Your Nickname
                 </Label>
@@ -95,12 +95,12 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
                   onChange={(e) => setFormData({...formData, nickname: e.target.value})}
                   placeholder="Your Nickname"
                   required
-                  className="border-pink-200 focus:border-pink-400"
+                  className="border-pink-200 focus:border-pink-400 text-sm sm:text-base"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="partnerEmail" className="text-gray-700 flex items-center">
+                <Label htmlFor="partnerEmail" className="text-gray-700 flex items-center text-sm sm:text-base">
                   <span className="mr-2">💌</span>
                   Partner's Email
                 </Label>
@@ -111,12 +111,12 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
                   onChange={(e) => setFormData({...formData, partnerEmail: e.target.value})}
                   placeholder="Your Partner's Email"
                   required
-                  className="border-pink-200 focus:border-pink-400"
+                  className="border-pink-200 focus:border-pink-400 text-sm sm:text-base"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="partnerNickname" className="text-gray-700 flex items-center">
+                <Label htmlFor="partnerNickname" className="text-gray-700 flex items-center text-sm sm:text-base">
                   <span className="mr-2">💜</span>
                   Partner's Nickname (Optional)
                 </Label>
@@ -125,7 +125,7 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
                   value={formData.partnerNickname}
                   onChange={(e) => setFormData({...formData, partnerNickname: e.target.value})}
                   placeholder="What you call your partner"
-                  className="border-pink-200 focus:border-pink-400"
+                  className="border-pink-200 focus:border-pink-400 text-sm sm:text-base"
                 />
                 <p className="text-xs text-gray-500">
                   This will be used until your partner registers
@@ -134,16 +134,16 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
 
               <Button 
                 type="submit" 
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 text-sm sm:text-base"
               >
                 💾 Save Changes
               </Button>
             </form>
 
-            <div className="text-center mt-6">
+            <div className="text-center mt-4 sm:mt-6">
               <button 
                 onClick={onBack}
-                className="text-pink-600 hover:text-pink-700 font-medium"
+                className="text-pink-600 hover:text-pink-700 font-medium text-sm sm:text-base"
               >
                 Back to Dashboard
               </button>
