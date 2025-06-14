@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import { ThankYouPage } from "@/components/ThankYouPage";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
-  const { currentUser, userData } = useAuth();
+  const { currentUser, userData, logout } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou'>('home');
 
   useEffect(() => {
@@ -50,7 +49,8 @@ const Index = () => {
     window.location.hash = '';
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logout();
     setCurrentView('home');
   };
 
