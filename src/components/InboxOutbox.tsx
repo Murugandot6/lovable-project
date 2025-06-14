@@ -16,6 +16,22 @@ interface InboxOutboxProps {
   onViewMessage: (message: any, mode: 'respond' | 'view') => void;
 }
 
+interface Message {
+  id: string;
+  title: string;
+  description: string;
+  priority?: string;
+  status: string;
+  timestamp: any;
+  senderNickname: string;
+  senderEmail: string;
+  receiverEmail: string;
+  mood?: string;
+  responses?: any[];
+  messageType?: string;
+  type?: string;
+}
+
 const messageTypeConfig = {
   grievance: { 
     color: "bg-red-50 border-red-200 text-red-800", 
@@ -46,8 +62,8 @@ const messageTypeConfig = {
 export const InboxOutbox = ({ userData, onBack, onViewMessage }: InboxOutboxProps) => {
   const { toast } = useToast();
   const { currentUser } = useAuth();
-  const [sentMessages, setSentMessages] = useState<any[]>([]);
-  const [receivedMessages, setReceivedMessages] = useState<any[]>([]);
+  const [sentMessages, setSentMessages] = useState<Message[]>([]);
+  const [receivedMessages, setReceivedMessages] = useState<Message[]>([]);
   const [activeTab, setActiveTab] = useState("inbox");
 
   useEffect(() => {
@@ -55,18 +71,17 @@ export const InboxOutbox = ({ userData, onBack, onViewMessage }: InboxOutboxProp
       return;
     }
 
-    // Query for sent messages
+    // Query for sent messages (outbox)
     const sentQuery = query(
       collection(db, 'grievances'),
-      where('senderEmail', '==', currentUser.email),
-      where('type', '!=', 'broken_heart_request')
+      where('senderEmail', '==', currentUser.email)
     );
 
     const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
       const messages = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })).filter(msg => msg.type !== 'broken_heart_request' && msg.type !== 'partner_response');
+      } as Message)).filter(msg => msg.type !== 'broken_heart_request' && msg.type !== 'partner_response');
       
       const sortedMessages = messages.sort((a, b) => {
         const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
@@ -77,18 +92,17 @@ export const InboxOutbox = ({ userData, onBack, onViewMessage }: InboxOutboxProp
       setSentMessages(sortedMessages);
     });
 
-    // Query for received messages
+    // Query for received messages (inbox)
     const receivedQuery = query(
       collection(db, 'grievances'),
-      where('receiverEmail', '==', currentUser.email),
-      where('type', '!=', 'broken_heart_request')
+      where('receiverEmail', '==', currentUser.email)
     );
 
     const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
       const messages = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })).filter(msg => msg.type !== 'broken_heart_request' && msg.type !== 'partner_response');
+      } as Message)).filter(msg => msg.type !== 'broken_heart_request' && msg.type !== 'partner_response');
       
       const sortedMessages = messages.sort((a, b) => {
         const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
@@ -125,7 +139,7 @@ export const InboxOutbox = ({ userData, onBack, onViewMessage }: InboxOutboxProp
     }
   };
 
-  const renderMessageCard = (message: any, index: number, isInbox: boolean) => {
+  const renderMessageCard = (message: Message, index: number, isInbox: boolean) => {
     const messageType = message.messageType || 'grievance';
     const config = messageTypeConfig[messageType as keyof typeof messageTypeConfig] || messageTypeConfig.grievance;
     const IconComponent = config.icon;

@@ -482,7 +482,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-pink-600 dark:text-pink-400 flex items-center">
                   <span className="mr-2">📤</span>
-                  Messages You've Sent ({sentGrievances.length})
+                  Outbox ({sentGrievances.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -543,7 +543,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-purple-600 dark:text-purple-400 flex items-center">
                   <span className="mr-2">📥</span>
-                  Messages You've Received ({receivedGrievances.length})
+                  Inbox ({receivedGrievances.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -587,18 +587,19 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           </div>
         </div>
 
-        {/* Submit New Grievance Button */}
+        {/* Send New Message Button */}
         <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-xl">
           <CardContent className="py-6">
             <Button 
               onClick={onSubmitGrievance}
               className="w-full bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white py-4 rounded-lg font-semibold text-lg"
             >
-              📝 Submit a New Grievance
+              📝 Send New Message
             </Button>
           </CardContent>
         </Card>
 
+        {/* Dialogs */}
         <BrokenHeartDialog 
           isOpen={showBrokenHeartDialog}
           onClose={() => setShowBrokenHeartDialog(false)}
