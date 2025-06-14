@@ -1,13 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, User, LogOut, Edit, MessageCircle } from "lucide-react";
+import { Heart, User, LogOut, Edit, MessageCircle, Eye, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { GrievanceResponse } from "./GrievanceResponse";
+import { GrievanceView } from "./GrievanceView";
 
 interface UserData {
   uid: string;
@@ -34,6 +34,7 @@ interface Grievance {
   senderNickname: string;
   senderEmail: string;
   receiverEmail: string;
+  responses: any[];
 }
 
 export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditProfile }: UserDashboardProps) => {
@@ -43,6 +44,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [receivedGrievances, setReceivedGrievances] = useState<Grievance[]>([]);
   const [partnerData, setPartnerData] = useState<any>(null);
   const [selectedGrievance, setSelectedGrievance] = useState<Grievance | null>(null);
+  const [viewMode, setViewMode] = useState<'respond' | 'view'>('respond');
 
   useEffect(() => {
     // Add proper guards to ensure all required data exists
@@ -161,14 +163,54 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     };
   }, [currentUser, userData, toast]);
 
-  // If a grievance is selected for response, show the response component
+  const handleMarkResolved = async (grievanceId: string) => {
+    try {
+      await updateDoc(doc(db, 'grievances', grievanceId), {
+        status: 'resolved'
+      });
+
+      toast({
+        title: "Grievance Resolved! 🎉",
+        description: "Thank you for working together to solve this issue.",
+      });
+    } catch (error) {
+      console.error("Error updating grievance status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update grievance status.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleViewGrievance = (grievance: Grievance, mode: 'respond' | 'view') => {
+    setSelectedGrievance(grievance);
+    setViewMode(mode);
+  };
+
+  const handleBackToDashboard = () => {
+    setSelectedGrievance(null);
+  };
+
+  // If a grievance is selected, show the appropriate component
   if (selectedGrievance) {
-    return (
-      <GrievanceResponse 
-        grievance={selectedGrievance} 
-        onBack={() => setSelectedGrievance(null)} 
-      />
-    );
+    if (viewMode === 'respond') {
+      return (
+        <GrievanceResponse 
+          grievance={selectedGrievance} 
+          onBack={handleBackToDashboard} 
+        />
+      );
+    } else {
+      return (
+        <GrievanceView 
+          grievance={selectedGrievance} 
+          onBack={handleBackToDashboard}
+          onMarkResolved={handleMarkResolved}
+          canMarkResolved={selectedGrievance.senderEmail === currentUser?.email}
+        />
+      );
+    }
   }
 
   return (
@@ -251,10 +293,37 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
               ) : (
                 <div className="space-y-2">
                   {sentGrievances.slice(0, 3).map((grievance) => (
-                    <div key={grievance.id} className="p-3 bg-pink-50 rounded-lg">
-                      <p className="font-medium text-gray-800">{grievance.title}</p>
-                      <p className="text-sm text-gray-600">{grievance.status}</p>
-                      <p className="text-xs text-gray-500">To: {grievance.receiverEmail}</p>
+                    <div key={grievance.id} className="p-3 bg-pink-50 rounded-lg border border-pink-200 hover:border-pink-300 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800">{grievance.title}</p>
+                          <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
+                          <p className="text-xs text-gray-500">To: {grievance.receiverEmail}</p>
+                          {grievance.responses && grievance.responses.length > 0 && (
+                            <p className="text-xs text-green-600 font-medium">{grievance.responses.length} response(s)</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleViewGrievance(grievance, 'view')}
+                            size="sm"
+                            className="bg-pink-500 hover:bg-pink-600 text-white"
+                          >
+                            <Eye className="mr-1" size={14} />
+                            View
+                          </Button>
+                          {grievance.status !== 'resolved' && grievance.responses && grievance.responses.length > 0 && (
+                            <Button
+                              onClick={() => handleMarkResolved(grievance.id)}
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600 text-white"
+                            >
+                              <CheckCircle className="mr-1" size={14} />
+                              Resolve
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -279,11 +348,11 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <p className="font-medium text-gray-800">{grievance.title}</p>
-                          <p className="text-sm text-gray-600">{grievance.status}</p>
+                          <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
                           <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
                         </div>
                         <Button
-                          onClick={() => setSelectedGrievance(grievance)}
+                          onClick={() => handleViewGrievance(grievance, 'respond')}
                           size="sm"
                           className="bg-purple-500 hover:bg-purple-600 text-white"
                         >
