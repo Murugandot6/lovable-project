@@ -49,6 +49,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     }
 
     console.log("Setting up grievance listeners for:", userData.email);
+    console.log("Current user UID:", currentUser.uid);
 
     // Load sent grievances
     const sentQuery = query(
@@ -59,10 +60,14 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
 
     const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
       console.log("Sent grievances snapshot:", snapshot.docs.length);
-      const grievances = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Grievance[];
+      const grievances = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log("Sent grievance data:", data);
+        return {
+          id: doc.id,
+          ...data
+        };
+      }) as Grievance[];
       setSentGrievances(grievances);
     }, (error) => {
       console.error("Error loading sent grievances:", error);
@@ -82,10 +87,14 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
 
     const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
       console.log("Received grievances snapshot:", snapshot.docs.length);
-      const grievances = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Grievance[];
+      const grievances = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log("Received grievance data:", data);
+        return {
+          id: doc.id,
+          ...data
+        };
+      }) as Grievance[];
       setReceivedGrievances(grievances);
     }, (error) => {
       console.error("Error loading received grievances:", error);
@@ -136,6 +145,15 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             <LogOut className="mr-2" size={16} />
             Logout
           </Button>
+        </div>
+
+        {/* Debug Info */}
+        <div className="mb-4 p-4 bg-gray-100 rounded-lg text-sm">
+          <p><strong>Debug Info:</strong></p>
+          <p>User Email: {userData.email}</p>
+          <p>Partner Email: {userData.partnerEmail}</p>
+          <p>Sent Grievances: {sentGrievances.length}</p>
+          <p>Received Grievances: {receivedGrievances.length}</p>
         </div>
 
         {/* User Profile Section */}

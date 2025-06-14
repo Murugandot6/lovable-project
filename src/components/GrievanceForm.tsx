@@ -20,6 +20,7 @@ interface GrievanceFormProps {
 export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
   const { toast } = useToast();
   const { currentUser, userData } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     partnerName1: "",
     partnerName2: "",
@@ -32,6 +33,7 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
 
   useEffect(() => {
     if (userData) {
+      console.log("Setting initial form data:", userData);
       setFormData(prev => ({
         ...prev,
         partnerName1: userData.nickname || "",
@@ -43,7 +45,13 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentUser || !userData) {
+    console.log("Starting grievance submission...");
+    console.log("Current user:", !!currentUser);
+    console.log("User data:", userData);
+    console.log("Form data:", formData);
+    
+    if (!currentUser) {
+      console.error("No current user found");
       toast({
         title: "Error",
         description: "You must be logged in to submit a grievance.",
@@ -52,7 +60,30 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
       return;
     }
 
+    if (!userData || !userData.email || !userData.partnerEmail) {
+      console.error("Missing userData or required fields:", userData);
+      toast({
+        title: "Error",
+        description: "Please complete your profile before submitting a grievance.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.concernTitle || !formData.description || !formData.priority) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
+      console.log("Looking for partner with email:", userData.partnerEmail);
+      
       // Find partner's data
       let partnerId = null;
       const partnerQuery = query(
@@ -63,10 +94,12 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
       
       if (!partnerSnapshot.empty) {
         partnerId = partnerSnapshot.docs[0].id;
+        console.log("Found partner with ID:", partnerId);
+      } else {
+        console.log("Partner not found, continuing without partnerId");
       }
 
-      // Save grievance to Firestore
-      await addDoc(collection(db, 'grievances'), {
+      const grievanceData = {
         title: formData.concernTitle,
         description: formData.description,
         priority: formData.priority,
@@ -74,12 +107,18 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
         relationshipDuration: formData.relationshipDuration,
         timestamp: serverTimestamp(),
         senderId: currentUser.uid,
-        senderNickname: userData.nickname,
+        senderNickname: userData.nickname || userData.email,
         senderEmail: userData.email,
         receiverId: partnerId,
         receiverEmail: userData.partnerEmail,
         status: "Pending"
-      });
+      };
+
+      console.log("Submitting grievance data:", grievanceData);
+
+      // Save grievance to Firestore
+      const docRef = await addDoc(collection(db, 'grievances'), grievanceData);
+      console.log("Grievance saved with ID:", docRef.id);
       
       toast({
         title: "Concern Submitted Successfully! 💕",
@@ -88,12 +127,14 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
       
       onSubmitted();
     } catch (error) {
-      console.error("Grievance submission error:", error);
+      console.error("Detailed grievance submission error:", error);
       toast({
-        title: "Error",
-        description: "Failed to submit grievance. Please try again.",
+        title: "Submission Failed",
+        description: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -215,10 +256,11 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
 
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="mr-2" size={20} />
-                Submit Concern
+                {isSubmitting ? 'Submitting...' : 'Submit Concern'}
               </Button>
             </form>
           </CardContent>
