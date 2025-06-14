@@ -20,6 +20,7 @@ interface UserData {
   nickname: string;
   partnerEmail: string;
   userIcon: string;
+  partnerNickname?: string;
 }
 
 interface UserDashboardProps {
@@ -207,37 +208,18 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             setPartnerData(partner);
           } else {
             console.log("No partner found with email:", cleanedEmail);
+            console.log("Using custom partner nickname from userData:", userData.partnerNickname);
             
-            // Let's also try to get all users to debug
-            const allUsersQuery = query(collection(db, 'users'));
-            const allUsersSnapshot = await getDocs(allUsersQuery);
-            console.log("=== ALL REGISTERED USERS ===");
-            allUsersSnapshot.docs.forEach(doc => {
-              const user = doc.data();
-              console.log("User email:", user.email, "Type:", typeof user.email, "Length:", user.email?.length);
-              console.log("User nickname:", user.nickname);
-              console.log("Email match check:", user.email === cleanedEmail);
-              console.log("---");
-            });
+            // Use the custom nickname from userData if available
+            if (userData.partnerNickname) {
+              setPartnerData({
+                nickname: userData.partnerNickname,
+                email: userData.partnerEmail,
+                isCustomNickname: true
+              });
+            }
             
-            // Try alternate search methods
-            console.log("=== TRYING ALTERNATE SEARCHES ===");
-            
-            // Try exact match with original email
-            const exactQuery = query(
-              collection(db, 'users'),
-              where('email', '==', userData.partnerEmail)
-            );
-            const exactSnapshot = await getDocs(exactQuery);
-            console.log("Exact email match results:", exactSnapshot.size);
-            
-            // Try case-sensitive search
-            const originalQuery = query(
-              collection(db, 'users'),
-              where('email', '==', userData.partnerEmail.trim())
-            );
-            const originalSnapshot = await getDocs(originalQuery);
-            console.log("Trimmed only match results:", originalSnapshot.size);
+            console.log("No partner found, using custom nickname.");
           }
         } catch (error) {
           console.error("Error loading partner data:", error);
@@ -440,8 +422,13 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 <div className="text-center">
                   <p className="text-pink-500 dark:text-pink-400 font-semibold">Partner</p>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {partnerData?.nickname || 'Loading partner...'}
+                    {partnerData?.nickname || 'Not set'}
                   </p>
+                  {partnerData?.isCustomNickname && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      (Custom nickname)
+                    </p>
+                  )}
                   {!partnerData?.nickname && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {userData.partnerEmail}

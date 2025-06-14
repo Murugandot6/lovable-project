@@ -15,6 +15,7 @@ interface UserData {
   email: string;
   nickname: string;
   partnerEmail: string;
+  partnerNickname?: string;
   userIcon: string;
 }
 
@@ -29,7 +30,8 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
   const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     nickname: userData?.nickname || "",
-    partnerEmail: userData?.partnerEmail || ""
+    partnerEmail: userData?.partnerEmail || "",
+    partnerNickname: userData?.partnerNickname || ""
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,7 +49,8 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         nickname: formData.nickname,
-        partnerEmail: formData.partnerEmail
+        partnerEmail: formData.partnerEmail,
+        partnerNickname: formData.partnerNickname
       });
       
       toast({
@@ -84,7 +87,7 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
               <div className="space-y-2">
                 <Label htmlFor="nickname" className="text-gray-700 flex items-center">
                   <span className="mr-2">👤</span>
-                  Nickname
+                  Your Nickname
                 </Label>
                 <Input
                   id="nickname"
@@ -110,6 +113,23 @@ export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
                   required
                   className="border-pink-200 focus:border-pink-400"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="partnerNickname" className="text-gray-700 flex items-center">
+                  <span className="mr-2">💜</span>
+                  Partner's Nickname (Optional)
+                </Label>
+                <Input
+                  id="partnerNickname"
+                  value={formData.partnerNickname}
+                  onChange={(e) => setFormData({...formData, partnerNickname: e.target.value})}
+                  placeholder="What you call your partner"
+                  className="border-pink-200 focus:border-pink-400"
+                />
+                <p className="text-xs text-gray-500">
+                  This will be used until your partner registers
+                </p>
               </div>
 
               <Button 
