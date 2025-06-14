@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Send, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { doc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -76,7 +76,7 @@ export const GrievanceResponse = ({ grievance, onBack }: GrievanceResponseProps)
         message: responseText,
         responderId: currentUser.uid,
         responderNickname: userData.nickname,
-        timestamp: serverTimestamp()
+        timestamp: Timestamp.now()
       };
 
       await updateDoc(doc(db, 'grievances', grievance.id), {
