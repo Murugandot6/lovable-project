@@ -82,7 +82,8 @@ const Index = () => {
           return (
             <GrievanceForm 
               onBack={() => setCurrentView('userDashboard')}
-              onSubmit={() => setCurrentView('thankYou')}
+              onSuccess={() => setCurrentView('thankYou')}
+              userData={userData}
             />
           );
         case 'thankYou':
