@@ -6,44 +6,64 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Heart, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserData {
+  uid: string;
   email: string;
   nickname: string;
   partnerEmail: string;
-  isLoggedIn: boolean;
+  userIcon: string;
 }
 
 interface ProfileEditProps {
-  userData: UserData;
+  userData: UserData | null;
   onBack: () => void;
-  onSave: (updatedData: UserData) => void;
+  onSave: () => void;
 }
 
 export const ProfileEdit = ({ userData, onBack, onSave }: ProfileEditProps) => {
   const { toast } = useToast();
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
-    nickname: userData.nickname,
-    partnerEmail: userData.partnerEmail
+    nickname: userData?.nickname || "",
+    partnerEmail: userData?.partnerEmail || ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const updatedUserData = {
-      ...userData,
-      nickname: formData.nickname,
-      partnerEmail: formData.partnerEmail
-    };
-    
-    localStorage.setItem('userData', JSON.stringify(updatedUserData));
-    
-    toast({
-      title: "Profile Updated! ✨",
-      description: "Your profile changes have been saved.",
-    });
-    
-    onSave(updatedUserData);
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update your profile.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'users', currentUser.uid), {
+        nickname: formData.nickname,
+        partnerEmail: formData.partnerEmail
+      });
+      
+      toast({
+        title: "Profile Updated! ✨",
+        description: "Your profile changes have been saved.",
+      });
+      
+      onSave();
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

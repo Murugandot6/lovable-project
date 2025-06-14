@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Heart, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface GrievanceFormProps {
   onBack: () => void;
@@ -16,7 +19,7 @@ interface GrievanceFormProps {
 
 export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
   const { toast } = useToast();
-  const [userData, setUserData] = useState<any>(null);
+  const { currentUser, userData } = useAuth();
   const [formData, setFormData] = useState({
     partnerName1: "",
     partnerName2: "",
@@ -28,43 +31,70 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
   });
 
   useEffect(() => {
-    // Get logged-in user data
-    const stored = localStorage.getItem('userData');
-    if (stored) {
-      const user = JSON.parse(stored);
-      setUserData(user);
+    if (userData) {
       setFormData(prev => ({
         ...prev,
-        partnerName1: user.nickname || "",
-        partnerName2: user.partnerEmail || ""
+        partnerName1: userData.nickname || "",
+        partnerName2: userData.partnerEmail || ""
       }));
     }
-  }, []);
+  }, [userData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Save to localStorage for demo purposes
-    const existingGrievances = JSON.parse(localStorage.getItem('grievances') || '[]');
-    const newGrievance = {
-      id: Date.now(),
-      ...formData,
-      status: 'pending',
-      submittedDate: new Date().toISOString(),
-      actions: [],
-      submittedBy: userData?.email || 'anonymous'
-    };
-    
-    existingGrievances.push(newGrievance);
-    localStorage.setItem('grievances', JSON.stringify(existingGrievances));
-    
-    toast({
-      title: "Concern Submitted Successfully! 💕",
-      description: "Your concern has been recorded. Check the dashboard to track progress.",
-    });
-    
-    // Navigate to thank you page
-    onSubmitted();
+    if (!currentUser || !userData) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to submit a grievance.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Find partner's data
+      let partnerId = null;
+      const partnerQuery = query(
+        collection(db, 'users'), 
+        where('email', '==', userData.partnerEmail)
+      );
+      const partnerSnapshot = await getDocs(partnerQuery);
+      
+      if (!partnerSnapshot.empty) {
+        partnerId = partnerSnapshot.docs[0].id;
+      }
+
+      // Save grievance to Firestore
+      await addDoc(collection(db, 'grievances'), {
+        title: formData.concernTitle,
+        description: formData.description,
+        priority: formData.priority,
+        desiredOutcome: formData.desiredOutcome,
+        relationshipDuration: formData.relationshipDuration,
+        timestamp: serverTimestamp(),
+        senderId: currentUser.uid,
+        senderNickname: userData.nickname,
+        senderEmail: userData.email,
+        receiverId: partnerId,
+        receiverEmail: userData.partnerEmail,
+        status: "Pending"
+      });
+      
+      toast({
+        title: "Concern Submitted Successfully! 💕",
+        description: "Your concern has been recorded. Check the dashboard to track progress.",
+      });
+      
+      onSubmitted();
+    } catch (error) {
+      console.error("Grievance submission error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit grievance. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

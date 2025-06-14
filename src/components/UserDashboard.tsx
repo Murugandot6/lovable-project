@@ -4,12 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, User, LogOut, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { collection, query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserData {
+  uid: string;
   email: string;
   nickname: string;
   partnerEmail: string;
-  userIcon?: string;
+  userIcon: string;
 }
 
 interface UserDashboardProps {
@@ -19,19 +23,79 @@ interface UserDashboardProps {
   onEditProfile: () => void;
 }
 
+interface Grievance {
+  id: string;
+  title: string;
+  description: string;
+  priority: string;
+  status: string;
+  timestamp: any;
+  senderNickname: string;
+  senderEmail: string;
+  receiverEmail: string;
+}
+
 export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditProfile }: UserDashboardProps) => {
   const { toast } = useToast();
-  const [grievances, setGrievances] = useState<any[]>([]);
+  const { currentUser } = useAuth();
+  const [sentGrievances, setSentGrievances] = useState<Grievance[]>([]);
+  const [receivedGrievances, setReceivedGrievances] = useState<Grievance[]>([]);
+  const [partnerData, setPartnerData] = useState<any>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('grievances');
-    if (stored) {
-      setGrievances(JSON.parse(stored));
-    }
-  }, []);
+    if (!currentUser || !userData) return;
 
-  const sentGrievances = grievances.filter(g => g.partnerName1 === userData.nickname);
-  const receivedGrievances = grievances.filter(g => g.partnerName2 === userData.nickname);
+    // Load sent grievances
+    const sentQuery = query(
+      collection(db, 'grievances'),
+      where('senderId', '==', currentUser.uid),
+      orderBy('timestamp', 'desc')
+    );
+
+    const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
+      const grievances = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Grievance[];
+      setSentGrievances(grievances);
+    });
+
+    // Load received grievances
+    const receivedQuery = query(
+      collection(db, 'grievances'),
+      where('receiverEmail', '==', userData.email),
+      orderBy('timestamp', 'desc')
+    );
+
+    const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
+      const grievances = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Grievance[];
+      setReceivedGrievances(grievances);
+    });
+
+    // Load partner data
+    const loadPartnerData = async () => {
+      if (userData.partnerEmail) {
+        const partnerQuery = query(
+          collection(db, 'users'),
+          where('email', '==', userData.partnerEmail)
+        );
+        const partnerSnapshot = await getDocs(partnerQuery);
+        if (!partnerSnapshot.empty) {
+          setPartnerData(partnerSnapshot.docs[0].data());
+        }
+      }
+    };
+
+    loadPartnerData();
+
+    return () => {
+      unsubscribeSent();
+      unsubscribeReceived();
+    };
+  }, [currentUser, userData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-8">
@@ -58,8 +122,8 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                   {userData.userIcon || "❤️"}
                 </div>
                 <Heart className="text-pink-500" size={24} />
-                <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center border-4 border-gray-200">
-                  <User className="text-gray-500" size={32} />
+                <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center border-4 border-gray-200 text-3xl">
+                  {partnerData?.userIcon || "💜"}
                 </div>
               </div>
             </div>
@@ -72,7 +136,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 </div>
                 <div className="text-center">
                   <p className="text-pink-500 font-semibold">Partner</p>
-                  <p className="text-sm text-gray-600">{userData.partnerEmail}</p>
+                  <p className="text-sm text-gray-600">{partnerData?.nickname || userData.partnerEmail}</p>
                 </div>
               </div>
             </div>
@@ -93,18 +157,19 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-pink-600 flex items-center">
                 <span className="mr-2">📤</span>
-                Grievances You've Sent
+                Grievances You've Sent ({sentGrievances.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {sentGrievances.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Fetching your grievances...</p>
+                <p className="text-gray-500 text-center py-4">No grievances sent yet.</p>
               ) : (
                 <div className="space-y-2">
                   {sentGrievances.slice(0, 3).map((grievance) => (
                     <div key={grievance.id} className="p-3 bg-pink-50 rounded-lg">
-                      <p className="font-medium text-gray-800">{grievance.concernTitle}</p>
+                      <p className="font-medium text-gray-800">{grievance.title}</p>
                       <p className="text-sm text-gray-600">{grievance.status}</p>
+                      <p className="text-xs text-gray-500">To: {grievance.receiverEmail}</p>
                     </div>
                   ))}
                 </div>
@@ -116,18 +181,19 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             <CardHeader>
               <CardTitle className="text-lg font-semibold text-purple-600 flex items-center">
                 <span className="mr-2">📥</span>
-                Grievances You've Received
+                Grievances You've Received ({receivedGrievances.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {receivedGrievances.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Fetching your grievances...</p>
+                <p className="text-gray-500 text-center py-4">No grievances received yet.</p>
               ) : (
                 <div className="space-y-2">
                   {receivedGrievances.slice(0, 3).map((grievance) => (
                     <div key={grievance.id} className="p-3 bg-purple-50 rounded-lg">
-                      <p className="font-medium text-gray-800">{grievance.concernTitle}</p>
+                      <p className="font-medium text-gray-800">{grievance.title}</p>
                       <p className="text-sm text-gray-600">{grievance.status}</p>
+                      <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
                     </div>
                   ))}
                 </div>
