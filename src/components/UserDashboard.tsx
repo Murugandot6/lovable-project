@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -192,21 +193,28 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const handleBrokenHeartRequest = async (reason: string) => {
     try {
       const requestData = {
-        requesterEmail: currentUser?.email || '',
-        requesterNickname: userData.nickname || '',
-        partnerEmail: userData.partnerEmail || '',
-        reason: reason,
-        status: 'pending',
-        timestamp: serverTimestamp()
+        title: "💔 Clear All Grievances Request",
+        description: reason,
+        priority: "high",
+        status: "pending",
+        timestamp: serverTimestamp(),
+        senderNickname: userData.nickname || '',
+        senderEmail: currentUser?.email || '',
+        receiverEmail: userData.partnerEmail || '',
+        senderId: currentUser?.uid || '',
+        receiverId: '', // Will be filled when partner responds
+        mood: "hopeful",
+        responses: [],
+        type: "broken_heart_request" // Special type to identify broken heart requests
       };
 
-      console.log("Sending broken heart request:", requestData);
+      console.log("Sending broken heart request as grievance:", requestData);
 
-      await addDoc(collection(db, 'brokenHeartRequests'), requestData);
+      await addDoc(collection(db, 'grievances'), requestData);
 
       toast({
-        title: "Broken Heart Request Sent 💔",
-        description: "Your partner will be notified to approve clearing all grievances.",
+        title: "Clear All Request Sent 💔",
+        description: "Your partner will receive your request to start fresh together.",
       });
       
       setShowBrokenHeartDialog(false);
