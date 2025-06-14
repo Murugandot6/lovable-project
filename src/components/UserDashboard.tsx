@@ -40,6 +40,7 @@ interface Grievance {
   receiverEmail: string;
   mood?: string;
   responses: any[];
+  type?: string;
 }
 
 export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditProfile }: UserDashboardProps) => {
@@ -70,16 +71,15 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     console.log("Current user UID:", currentUser.uid);
     console.log("Partner email:", userData.partnerEmail);
 
-    // Fixed query for sent grievances
+    // Simplified query for sent grievances (no compound index needed)
     const sentQuery = query(
       collection(db, 'grievances'),
-      where('senderEmail', '==', currentUser.email),
-      where('type', '!=', 'broken_heart_request')
+      where('senderEmail', '==', currentUser.email)
     );
 
     const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
       console.log("Sent grievances snapshot received:", snapshot.docs.length, "documents");
-      const grievances = snapshot.docs.map(doc => {
+      const allGrievances = snapshot.docs.map(doc => {
         const data = doc.data();
         console.log("Sent grievance data:", data);
         return {
@@ -87,6 +87,11 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           ...data
         };
       }) as Grievance[];
+      
+      // Filter out broken heart requests and partner responses
+      const grievances = allGrievances.filter(g => 
+        g.type !== 'broken_heart_request' && g.type !== 'partner_response'
+      );
       
       const sortedGrievances = grievances.sort((a, b) => {
         const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
@@ -105,15 +110,15 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       });
     });
 
+    // Simplified query for received grievances (no compound index needed)
     const receivedQuery = query(
       collection(db, 'grievances'),
-      where('receiverEmail', '==', currentUser.email),
-      where('type', '!=', 'broken_heart_request')
+      where('receiverEmail', '==', currentUser.email)
     );
 
     const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
       console.log("Received grievances snapshot received:", snapshot.docs.length, "documents");
-      const grievances = snapshot.docs.map(doc => {
+      const allGrievances = snapshot.docs.map(doc => {
         const data = doc.data();
         console.log("Received grievance data:", data);
         return {
@@ -121,6 +126,19 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           ...data
         };
       }) as Grievance[];
+      
+      // Filter out broken heart requests and partner responses, keep regular grievances
+      const grievances = allGrievances.filter(g => 
+        g.type !== 'broken_heart_request' && g.type !== 'partner_response'
+      );
+      
+      // Separate broken heart requests for special handling
+      const brokenHeartRequests = allGrievances.filter(g => g.type === 'broken_heart_request');
+      if (brokenHeartRequests.length > 0) {
+        setBrokenHeartRequest(brokenHeartRequests[0]);
+      } else {
+        setBrokenHeartRequest(null);
+      }
       
       const sortedGrievances = grievances.sort((a, b) => {
         const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
@@ -137,29 +155,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         description: "Failed to load received grievances.",
         variant: "destructive"
       });
-    });
-
-    // Listen for broken heart requests
-    const brokenHeartQuery = query(
-      collection(db, 'grievances'),
-      where('receiverEmail', '==', currentUser.email),
-      where('type', '==', 'broken_heart_request')
-    );
-
-    const unsubscribeBrokenHeart = onSnapshot(brokenHeartQuery, (snapshot) => {
-      console.log("Broken heart requests snapshot received:", snapshot.docs.length, "documents");
-      if (!snapshot.empty) {
-        const request = {
-          id: snapshot.docs[0].id,
-          ...snapshot.docs[0].data()
-        };
-        console.log("Setting broken heart request:", request);
-        setBrokenHeartRequest(request);
-      } else {
-        setBrokenHeartRequest(null);
-      }
-    }, (error) => {
-      console.error("Error loading broken heart requests:", error);
     });
 
     // Listen for partner responses to my clear all requests
@@ -208,7 +203,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     return () => {
       unsubscribeSent();
       unsubscribeReceived();
-      unsubscribeBrokenHeart();
       unsubscribePartnerResponse();
     };
   }, [currentUser, userData, toast]);
