@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, User, LogOut, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, getDocs, or } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -43,15 +44,21 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
 
   useEffect(() => {
     // Add proper guards to ensure all required data exists
-    if (!currentUser || !userData || !userData.email) {
-      console.log("Missing required data:", { currentUser: !!currentUser, userData: !!userData, email: userData?.email });
+    if (!currentUser || !userData || !currentUser.email) {
+      console.log("Missing required data:", { 
+        currentUser: !!currentUser, 
+        userData: !!userData, 
+        currentUserEmail: currentUser?.email 
+      });
       return;
     }
 
-    console.log("Setting up grievance listeners for:", userData.email);
+    console.log("Setting up grievance listeners for:");
+    console.log("Current user email:", currentUser.email);
     console.log("Current user UID:", currentUser.uid);
+    console.log("Partner email:", userData.partnerEmail);
 
-    // Load sent grievances
+    // Load sent grievances - query by current user's UID
     const sentQuery = query(
       collection(db, 'grievances'),
       where('senderId', '==', currentUser.uid),
@@ -59,7 +66,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     );
 
     const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
-      console.log("Sent grievances snapshot:", snapshot.docs.length);
+      console.log("Sent grievances snapshot received:", snapshot.docs.length, "documents");
       const grievances = snapshot.docs.map(doc => {
         const data = doc.data();
         console.log("Sent grievance data:", data);
@@ -68,6 +75,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           ...data
         };
       }) as Grievance[];
+      console.log("Setting sent grievances:", grievances.length);
       setSentGrievances(grievances);
     }, (error) => {
       console.error("Error loading sent grievances:", error);
@@ -78,15 +86,15 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       });
     });
 
-    // Load received grievances - only if userData.email exists
+    // Load received grievances - query by current user's email as receiver
     const receivedQuery = query(
       collection(db, 'grievances'),
-      where('receiverEmail', '==', userData.email),
+      where('receiverEmail', '==', currentUser.email),
       orderBy('timestamp', 'desc')
     );
 
     const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
-      console.log("Received grievances snapshot:", snapshot.docs.length);
+      console.log("Received grievances snapshot received:", snapshot.docs.length, "documents");
       const grievances = snapshot.docs.map(doc => {
         const data = doc.data();
         console.log("Received grievance data:", data);
@@ -95,6 +103,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           ...data
         };
       }) as Grievance[];
+      console.log("Setting received grievances:", grievances.length);
       setReceivedGrievances(grievances);
     }, (error) => {
       console.error("Error loading received grievances:", error);
@@ -109,13 +118,18 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     const loadPartnerData = async () => {
       if (userData.partnerEmail) {
         try {
+          console.log("Loading partner data for:", userData.partnerEmail);
           const partnerQuery = query(
             collection(db, 'users'),
             where('email', '==', userData.partnerEmail)
           );
           const partnerSnapshot = await getDocs(partnerQuery);
           if (!partnerSnapshot.empty) {
-            setPartnerData(partnerSnapshot.docs[0].data());
+            const partner = partnerSnapshot.docs[0].data();
+            console.log("Found partner data:", partner);
+            setPartnerData(partner);
+          } else {
+            console.log("No partner found with email:", userData.partnerEmail);
           }
         } catch (error) {
           console.error("Error loading partner data:", error);
@@ -150,10 +164,12 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         {/* Debug Info */}
         <div className="mb-4 p-4 bg-gray-100 rounded-lg text-sm">
           <p><strong>Debug Info:</strong></p>
-          <p>User Email: {userData.email}</p>
+          <p>Current User Email: {currentUser?.email}</p>
+          <p>User Nickname: {userData.nickname}</p>
           <p>Partner Email: {userData.partnerEmail}</p>
           <p>Sent Grievances: {sentGrievances.length}</p>
           <p>Received Grievances: {receivedGrievances.length}</p>
+          <p>Partner Data Found: {partnerData ? 'Yes' : 'No'}</p>
         </div>
 
         {/* User Profile Section */}
