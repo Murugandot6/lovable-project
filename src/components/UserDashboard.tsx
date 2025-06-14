@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -171,7 +170,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       {isGrievanceViewOpen && selectedGrievance && (
         <GrievanceView 
           grievance={selectedGrievance} 
-          onClose={handleCloseGrievanceView}
           onBack={handleCloseGrievanceView}
           onMarkResolved={() => {}}
           canMarkResolved={false}
