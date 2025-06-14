@@ -392,7 +392,14 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 </div>
                 <div className="text-center">
                   <p className="text-pink-500 dark:text-pink-400 font-semibold">Partner</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">{partnerData?.nickname || userData.partnerEmail}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {partnerData?.nickname || 'Partner not found'}
+                  </p>
+                  {!partnerData?.nickname && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {userData.partnerEmail}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
