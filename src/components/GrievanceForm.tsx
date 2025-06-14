@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ interface GrievanceFormProps {
 
 export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
   const { toast } = useToast();
+  const [userData, setUserData] = useState<any>(null);
   const [formData, setFormData] = useState({
     partnerName1: "",
     partnerName2: "",
@@ -24,6 +25,20 @@ export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
     priority: "",
     desiredOutcome: ""
   });
+
+  useEffect(() => {
+    // Get logged-in user data
+    const stored = localStorage.getItem('userData');
+    if (stored) {
+      const user = JSON.parse(stored);
+      setUserData(user);
+      setFormData(prev => ({
+        ...prev,
+        partnerName1: user.nickname || "",
+        partnerName2: user.partnerEmail || ""
+      }));
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +50,8 @@ export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
       ...formData,
       status: 'pending',
       submittedDate: new Date().toISOString(),
-      actions: []
+      actions: [],
+      submittedBy: userData?.email || 'anonymous'
     };
     
     existingGrievances.push(newGrievance);
@@ -48,8 +64,8 @@ export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
     
     // Reset form
     setFormData({
-      partnerName1: "",
-      partnerName2: "",
+      partnerName1: userData?.nickname || "",
+      partnerName2: userData?.partnerEmail || "",
       relationshipDuration: "",
       concernTitle: "",
       description: "",
@@ -67,7 +83,7 @@ export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
           className="mb-6 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
         >
           <ArrowLeft className="mr-2" size={20} />
-          Back to Home
+          Back to Dashboard
         </Button>
 
         <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-xl">
@@ -87,23 +103,23 @@ export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="partner1" className="text-gray-700">Partner 1 Name</Label>
+                  <Label htmlFor="partner1" className="text-gray-700">Your Name</Label>
                   <Input
                     id="partner1"
                     value={formData.partnerName1}
                     onChange={(e) => setFormData({...formData, partnerName1: e.target.value})}
-                    placeholder="Enter first partner's name"
+                    placeholder="Your name"
                     required
                     className="border-pink-200 focus:border-pink-400"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="partner2" className="text-gray-700">Partner 2 Name</Label>
+                  <Label htmlFor="partner2" className="text-gray-700">Partner's Name/Email</Label>
                   <Input
                     id="partner2"
                     value={formData.partnerName2}
                     onChange={(e) => setFormData({...formData, partnerName2: e.target.value})}
-                    placeholder="Enter second partner's name"
+                    placeholder="Partner's name or email"
                     required
                     className="border-pink-200 focus:border-pink-400"
                   />
