@@ -181,22 +181,39 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     const loadPartnerData = async () => {
       if (userData.partnerEmail) {
         try {
-          console.log("Loading partner data for:", userData.partnerEmail);
+          console.log("Loading partner data for email:", userData.partnerEmail);
+          console.log("Searching in users collection...");
+          
           const partnerQuery = query(
             collection(db, 'users'),
-            where('email', '==', userData.partnerEmail)
+            where('email', '==', userData.partnerEmail.trim().toLowerCase())
           );
+          
           const partnerSnapshot = await getDocs(partnerQuery);
+          console.log("Partner query result:", partnerSnapshot.size, "documents found");
+          
           if (!partnerSnapshot.empty) {
             const partner = partnerSnapshot.docs[0].data();
             console.log("Found partner data:", partner);
+            console.log("Partner nickname:", partner.nickname);
             setPartnerData(partner);
           } else {
             console.log("No partner found with email:", userData.partnerEmail);
+            
+            // Let's also try to get all users to debug
+            const allUsersQuery = query(collection(db, 'users'));
+            const allUsersSnapshot = await getDocs(allUsersQuery);
+            console.log("All registered users:");
+            allUsersSnapshot.docs.forEach(doc => {
+              const user = doc.data();
+              console.log("User:", user.email, "Nickname:", user.nickname);
+            });
           }
         } catch (error) {
           console.error("Error loading partner data:", error);
         }
+      } else {
+        console.log("No partner email provided");
       }
     };
 
@@ -393,7 +410,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 <div className="text-center">
                   <p className="text-pink-500 dark:text-pink-400 font-semibold">Partner</p>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {partnerData?.nickname || 'Partner not found'}
+                    {partnerData?.nickname || 'Loading partner...'}
                   </p>
                   {!partnerData?.nickname && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
