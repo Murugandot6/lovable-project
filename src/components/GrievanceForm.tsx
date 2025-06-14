@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,29 +17,52 @@ interface GrievanceFormProps {
   onSubmitted: () => void;
 }
 
+const moodOptions = [
+  { value: "😊 Happy", label: "😊 Happy" },
+  { value: "😢 Sad", label: "😢 Sad" },
+  { value: "😠 Angry", label: "😠 Angry" },
+  { value: "😰 Anxious", label: "😰 Anxious" },
+  { value: "😔 Disappointed", label: "😔 Disappointed" },
+  { value: "😕 Confused", label: "😕 Confused" },
+  { value: "😤 Frustrated", label: "😤 Frustrated" },
+  { value: "😞 Hurt", label: "😞 Hurt" },
+  { value: "😟 Worried", label: "😟 Worried" },
+  { value: "🤔 Thoughtful", label: "🤔 Thoughtful" }
+];
+
 export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
   const { toast } = useToast();
   const { currentUser, userData } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [partnerData, setPartnerData] = useState<any>(null);
   const [formData, setFormData] = useState({
-    partnerName1: "",
-    partnerName2: "",
-    relationshipDuration: "",
     concernTitle: "",
     description: "",
     priority: "",
-    desiredOutcome: ""
+    desiredOutcome: "",
+    mood: ""
   });
 
   useEffect(() => {
-    if (userData) {
-      console.log("Setting initial form data:", userData);
-      setFormData(prev => ({
-        ...prev,
-        partnerName1: userData.nickname || "",
-        partnerName2: userData.partnerEmail || ""
-      }));
-    }
+    const loadPartnerData = async () => {
+      if (userData?.partnerEmail) {
+        try {
+          const partnerQuery = query(
+            collection(db, 'users'),
+            where('email', '==', userData.partnerEmail)
+          );
+          const partnerSnapshot = await getDocs(partnerQuery);
+          if (!partnerSnapshot.empty) {
+            const partner = partnerSnapshot.docs[0].data();
+            setPartnerData(partner);
+          }
+        } catch (error) {
+          console.error("Error loading partner data:", error);
+        }
+      }
+    };
+
+    loadPartnerData();
   }, [userData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +93,7 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
       return;
     }
 
-    if (!formData.concernTitle || !formData.description || !formData.priority) {
+    if (!formData.concernTitle || !formData.description || !formData.priority || !formData.mood) {
       toast({
         title: "Error",
         description: "Please fill in all required fields.",
@@ -83,7 +107,6 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
     try {
       console.log("Looking for partner with email:", userData.partnerEmail);
       
-      // Find partner's data
       let partnerId = null;
       const partnerQuery = query(
         collection(db, 'users'), 
@@ -103,11 +126,11 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
         description: formData.description,
         priority: formData.priority,
         desiredOutcome: formData.desiredOutcome,
-        relationshipDuration: formData.relationshipDuration,
+        mood: formData.mood,
         timestamp: serverTimestamp(),
         senderId: currentUser.uid,
         senderNickname: userData.nickname,
-        senderEmail: currentUser.email, // Use currentUser.email instead of userData.email
+        senderEmail: currentUser.email,
         receiverId: partnerId,
         receiverEmail: userData.partnerEmail,
         status: "Pending"
@@ -115,7 +138,6 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
 
       console.log("Submitting grievance data:", grievanceData);
 
-      // Save grievance to Firestore
       const docRef = await addDoc(collection(db, 'grievances'), grievanceData);
       console.log("Grievance saved with ID:", docRef.id);
       
@@ -158,49 +180,12 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
               Share Your Concern
             </CardTitle>
             <p className="text-gray-600 mt-2">
-              Express your feelings in a safe space designed for understanding and growth
+              Express your feelings to {partnerData?.nickname || userData?.partnerEmail} in a safe space
             </p>
           </CardHeader>
           
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="partner1" className="text-gray-700">Your Name</Label>
-                  <Input
-                    id="partner1"
-                    value={formData.partnerName1}
-                    onChange={(e) => setFormData({...formData, partnerName1: e.target.value})}
-                    placeholder="Your name"
-                    required
-                    className="border-pink-200 focus:border-pink-400"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="partner2" className="text-gray-700">Partner's Name/Email</Label>
-                  <Input
-                    id="partner2"
-                    value={formData.partnerName2}
-                    onChange={(e) => setFormData({...formData, partnerName2: e.target.value})}
-                    placeholder="Partner's name or email"
-                    required
-                    className="border-pink-200 focus:border-pink-400"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="duration" className="text-gray-700">Relationship Duration</Label>
-                <Input
-                  id="duration"
-                  value={formData.relationshipDuration}
-                  onChange={(e) => setFormData({...formData, relationshipDuration: e.target.value})}
-                  placeholder="e.g., 2 years, 6 months"
-                  required
-                  className="border-pink-200 focus:border-pink-400"
-                />
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-gray-700">Concern Title</Label>
                 <Input
@@ -211,6 +196,22 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
                   required
                   className="border-pink-200 focus:border-pink-400"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mood" className="text-gray-700">How are you feeling?</Label>
+                <Select value={formData.mood} onValueChange={(value) => setFormData({...formData, mood: value})}>
+                  <SelectTrigger className="border-pink-200 focus:border-pink-400">
+                    <SelectValue placeholder="Select your mood" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {moodOptions.map((mood) => (
+                      <SelectItem key={mood.value} value={mood.value}>
+                        {mood.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -233,7 +234,7 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Describe your concern in detail. What happened? How did it make you feel? What would you like to see change?"
+                  placeholder="Describe your concern in detail. What happened? How did it make you feel?"
                   required
                   rows={5}
                   className="border-pink-200 focus:border-pink-400"

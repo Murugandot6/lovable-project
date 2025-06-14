@@ -34,6 +34,7 @@ interface Grievance {
   senderNickname: string;
   senderEmail: string;
   receiverEmail: string;
+  mood?: string;
   responses: any[];
 }
 
@@ -47,7 +48,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [viewMode, setViewMode] = useState<'respond' | 'view'>('respond');
 
   useEffect(() => {
-    // Add proper guards to ensure all required data exists
     if (!currentUser || !userData || !currentUser.email) {
       console.log("Missing required data:", { 
         currentUser: !!currentUser, 
@@ -62,7 +62,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     console.log("Current user UID:", currentUser.uid);
     console.log("Partner email:", userData.partnerEmail);
 
-    // Load sent grievances - simplified query without orderBy to avoid index requirement
     const sentQuery = query(
       collection(db, 'grievances'),
       where('senderId', '==', currentUser.uid)
@@ -79,11 +78,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         };
       }) as Grievance[];
       
-      // Sort by timestamp in JavaScript instead of Firestore
       const sortedGrievances = grievances.sort((a, b) => {
         const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
         const bTime = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
-        return bTime - aTime; // descending order (newest first)
+        return bTime - aTime;
       });
       
       console.log("Setting sent grievances:", sortedGrievances.length);
@@ -97,7 +95,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       });
     });
 
-    // Load received grievances - simplified query without orderBy to avoid index requirement
     const receivedQuery = query(
       collection(db, 'grievances'),
       where('receiverEmail', '==', currentUser.email)
@@ -114,11 +111,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         };
       }) as Grievance[];
       
-      // Sort by timestamp in JavaScript instead of Firestore
       const sortedGrievances = grievances.sort((a, b) => {
         const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
         const bTime = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
-        return bTime - aTime; // descending order (newest first)
+        return bTime - aTime;
       });
       
       console.log("Setting received grievances:", sortedGrievances.length);
@@ -132,7 +128,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       });
     });
 
-    // Load partner data - only if partnerEmail exists
     const loadPartnerData = async () => {
       if (userData.partnerEmail) {
         try {
@@ -192,7 +187,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     setSelectedGrievance(null);
   };
 
-  // If a grievance is selected, show the appropriate component
   if (selectedGrievance) {
     if (viewMode === 'respond') {
       return (
@@ -218,7 +212,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-pink-600">Welcome!</h1>
+          <h1 className="text-3xl font-bold text-pink-600">Welcome {userData.nickname}!</h1>
           <Button 
             onClick={onLogout}
             variant="outline"
@@ -263,7 +257,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 </div>
                 <div className="text-center">
                   <p className="text-pink-500 font-semibold">Partner</p>
-                  <p className="text-sm text-gray-600">{partnerData?.nickname || userData.partnerEmail}</p>
+                  <p className="text-sm text-gray-600">{partnerData?.nickname || "Not set"}</p>
                 </div>
               </div>
             </div>
@@ -298,7 +292,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                         <div className="flex-1">
                           <p className="font-medium text-gray-800">{grievance.title}</p>
                           <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
-                          <p className="text-xs text-gray-500">To: {grievance.receiverEmail}</p>
+                          <p className="text-xs text-gray-500">To: {partnerData?.nickname || grievance.receiverEmail}</p>
+                          {grievance.mood && (
+                            <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
+                          )}
                           {grievance.responses && grievance.responses.length > 0 && (
                             <p className="text-xs text-green-600 font-medium">{grievance.responses.length} response(s)</p>
                           )}
@@ -350,6 +347,9 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                           <p className="font-medium text-gray-800">{grievance.title}</p>
                           <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
                           <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
+                          {grievance.mood && (
+                            <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
+                          )}
                         </div>
                         <Button
                           onClick={() => handleViewGrievance(grievance, 'respond')}

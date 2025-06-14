@@ -14,6 +14,7 @@ interface Grievance {
   senderNickname: string;
   senderEmail: string;
   receiverEmail: string;
+  mood?: string;
   responses?: Array<{
     id: string;
     message: string;
@@ -75,6 +76,11 @@ export const GrievanceView = ({ grievance, onBack, onMarkResolved, canMarkResolv
                   <Badge className={getStatusColor(grievance.status)}>
                     {grievance.status}
                   </Badge>
+                  {grievance.mood && (
+                    <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                      {grievance.mood}
+                    </Badge>
+                  )}
                 </div>
               </div>
               <Heart className="text-pink-500" size={24} />
