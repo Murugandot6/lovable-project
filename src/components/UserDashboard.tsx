@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,19 @@ interface Grievance {
   submittedAt: string;
   status: 'open' | 'inProgress' | 'resolved' | 'closed';
   resolutionDetails?: string;
+  priority: string;
+  timestamp: any;
+  senderNickname: string;
+  senderEmail: string;
+  receiverEmail: string;
+  mood?: string;
+  responses?: Array<{
+    id: string;
+    message: string;
+    responderId: string;
+    responderNickname: string;
+    timestamp: any;
+  }>;
 }
 
 interface UserDashboardProps {
@@ -155,7 +169,13 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
 
       {/* Grievance View Modal */}
       {isGrievanceViewOpen && selectedGrievance && (
-        <GrievanceView grievance={selectedGrievance} onClose={handleCloseGrievanceView} />
+        <GrievanceView 
+          grievance={selectedGrievance} 
+          onClose={handleCloseGrievanceView}
+          onBack={handleCloseGrievanceView}
+          onMarkResolved={() => {}}
+          canMarkResolved={false}
+        />
       )}
     </div>
   );
