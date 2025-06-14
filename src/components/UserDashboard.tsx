@@ -1,10 +1,11 @@
 
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, User, LogOut, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, query, where, orderBy, onSnapshot, getDocs, or } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -58,11 +59,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     console.log("Current user UID:", currentUser.uid);
     console.log("Partner email:", userData.partnerEmail);
 
-    // Load sent grievances - query by current user's UID
+    // Load sent grievances - simplified query without orderBy to avoid index requirement
     const sentQuery = query(
       collection(db, 'grievances'),
-      where('senderId', '==', currentUser.uid),
-      orderBy('timestamp', 'desc')
+      where('senderId', '==', currentUser.uid)
     );
 
     const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
@@ -75,8 +75,16 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           ...data
         };
       }) as Grievance[];
-      console.log("Setting sent grievances:", grievances.length);
-      setSentGrievances(grievances);
+      
+      // Sort by timestamp in JavaScript instead of Firestore
+      const sortedGrievances = grievances.sort((a, b) => {
+        const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+        const bTime = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+        return bTime - aTime; // descending order (newest first)
+      });
+      
+      console.log("Setting sent grievances:", sortedGrievances.length);
+      setSentGrievances(sortedGrievances);
     }, (error) => {
       console.error("Error loading sent grievances:", error);
       toast({
@@ -86,11 +94,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       });
     });
 
-    // Load received grievances - query by current user's email as receiver
+    // Load received grievances - simplified query without orderBy to avoid index requirement
     const receivedQuery = query(
       collection(db, 'grievances'),
-      where('receiverEmail', '==', currentUser.email),
-      orderBy('timestamp', 'desc')
+      where('receiverEmail', '==', currentUser.email)
     );
 
     const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
@@ -103,8 +110,16 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           ...data
         };
       }) as Grievance[];
-      console.log("Setting received grievances:", grievances.length);
-      setReceivedGrievances(grievances);
+      
+      // Sort by timestamp in JavaScript instead of Firestore
+      const sortedGrievances = grievances.sort((a, b) => {
+        const aTime = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+        const bTime = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+        return bTime - aTime; // descending order (newest first)
+      });
+      
+      console.log("Setting received grievances:", sortedGrievances.length);
+      setReceivedGrievances(sortedGrievances);
     }, (error) => {
       console.error("Error loading received grievances:", error);
       toast({
@@ -276,3 +291,4 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     </div>
   );
 };
+
