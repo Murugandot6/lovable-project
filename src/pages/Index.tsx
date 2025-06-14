@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
@@ -155,10 +156,14 @@ const Index = () => {
 
             {/* Main Content - Google-style layout */}
             <div className="flex-1 flex flex-col items-center justify-center px-4">
-              {/* Logo */}
+              {/* Logo with Google Colors */}
               <div className="mb-8 text-center">
-                <h1 className="text-8xl md:text-9xl font-normal text-gray-700 dark:text-gray-200 mb-4 tracking-tight">
-                  anbae
+                <h1 className="text-8xl md:text-9xl font-normal mb-4 tracking-tight">
+                  <span className="text-blue-500">a</span>
+                  <span className="text-red-500">n</span>
+                  <span className="text-yellow-500">b</span>
+                  <span className="text-blue-500">a</span>
+                  <span className="text-green-500">e</span>
                 </h1>
                 <div className="flex items-center justify-center">
                   <Heart className="text-pink-500 dark:text-pink-400 mr-2" size={24} />
