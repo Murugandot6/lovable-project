@@ -1,13 +1,13 @@
 
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, User, LogOut, Edit } from "lucide-react";
+import { Heart, User, LogOut, Edit, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { collection, query, where, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+import { GrievanceResponse } from "./GrievanceResponse";
 
 interface UserData {
   uid: string;
@@ -42,6 +42,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [sentGrievances, setSentGrievances] = useState<Grievance[]>([]);
   const [receivedGrievances, setReceivedGrievances] = useState<Grievance[]>([]);
   const [partnerData, setPartnerData] = useState<any>(null);
+  const [selectedGrievance, setSelectedGrievance] = useState<Grievance | null>(null);
 
   useEffect(() => {
     // Add proper guards to ensure all required data exists
@@ -160,6 +161,16 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     };
   }, [currentUser, userData, toast]);
 
+  // If a grievance is selected for response, show the response component
+  if (selectedGrievance) {
+    return (
+      <GrievanceResponse 
+        grievance={selectedGrievance} 
+        onBack={() => setSelectedGrievance(null)} 
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -264,10 +275,22 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
               ) : (
                 <div className="space-y-2">
                   {receivedGrievances.slice(0, 3).map((grievance) => (
-                    <div key={grievance.id} className="p-3 bg-purple-50 rounded-lg">
-                      <p className="font-medium text-gray-800">{grievance.title}</p>
-                      <p className="text-sm text-gray-600">{grievance.status}</p>
-                      <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
+                    <div key={grievance.id} className="p-3 bg-purple-50 rounded-lg border border-purple-200 hover:border-purple-300 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-800">{grievance.title}</p>
+                          <p className="text-sm text-gray-600">{grievance.status}</p>
+                          <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
+                        </div>
+                        <Button
+                          onClick={() => setSelectedGrievance(grievance)}
+                          size="sm"
+                          className="bg-purple-500 hover:bg-purple-600 text-white"
+                        >
+                          <MessageCircle className="mr-1" size={14} />
+                          Respond
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -291,4 +314,3 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     </div>
   );
 };
-
