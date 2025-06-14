@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, Users, MessageSquare, CheckCircle } from "lucide-react";
+import { Heart } from "lucide-react";
 import { GrievanceForm } from "@/components/GrievanceForm";
 import { GrievanceDashboard } from "@/components/GrievanceDashboard";
 import { AuthForm } from "@/components/AuthForm";
@@ -16,6 +14,16 @@ import { useAuth } from "@/contexts/AuthContext";
 const Index = () => {
   const { currentUser, userData, logout } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou' | 'allGrievances'>('home');
+  const [displayText, setDisplayText] = useState("");
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
+
+  const sentences = [
+    "Submit your grievances for my viewing pleasure",
+    "Communicate better with your partner",
+    "Resolve issues together through understanding",
+    "Express feelings in a structured way",
+    "Work together to find common ground"
+  ];
 
   useEffect(() => {
     if (currentUser && userData) {
@@ -46,6 +54,29 @@ const Index = () => {
       return () => window.removeEventListener('hashchange', handleHashChange);
     }
   }, [currentUser, userData]);
+
+  // Typing animation effect
+  useEffect(() => {
+    if (currentView !== 'home') return;
+
+    const sentence = sentences[currentSentenceIndex];
+    let charIndex = 0;
+    setDisplayText("");
+
+    const typeInterval = setInterval(() => {
+      if (charIndex < sentence.length) {
+        setDisplayText(sentence.substring(0, charIndex + 1));
+        charIndex++;
+      } else {
+        clearInterval(typeInterval);
+        setTimeout(() => {
+          setCurrentSentenceIndex((prev) => (prev + 1) % sentences.length);
+        }, 2000);
+      }
+    }, 100);
+
+    return () => clearInterval(typeInterval);
+  }, [currentSentenceIndex, currentView]);
 
   const handleAuthSuccess = () => {
     setCurrentView('userDashboard');
@@ -116,117 +147,64 @@ const Index = () => {
         return <AuthForm mode="register" onBack={() => setCurrentView('home')} onAuthSuccess={handleAuthSuccess} />;
       default:
         return (
-          <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
+          <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
             {/* Theme Toggle */}
             <div className="fixed top-4 right-4 z-50">
               <ThemeToggle />
             </div>
 
-            {/* Header */}
-            <header className="container mx-auto px-4 py-8">
-              <div className="flex items-center justify-center mb-8">
-                <Heart className="text-pink-500 dark:text-pink-400 mr-2" size={32} />
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 dark:from-pink-400 dark:to-purple-400 bg-clip-text text-transparent">
-                  Welcome to your very own
+            {/* Main Content - Google-style layout */}
+            <div className="flex-1 flex flex-col items-center justify-center px-4">
+              {/* Logo */}
+              <div className="mb-8 text-center">
+                <h1 className="text-8xl md:text-9xl font-normal text-gray-700 dark:text-gray-200 mb-4 tracking-tight">
+                  anbae
                 </h1>
+                <div className="flex items-center justify-center">
+                  <Heart className="text-pink-500 dark:text-pink-400 mr-2" size={24} />
+                  <p className="text-lg text-gray-600 dark:text-gray-400">
+                    Grievance Portal
+                  </p>
+                </div>
               </div>
-              <div className="text-center">
-                <h2 className="text-4xl font-bold text-pink-600 dark:text-pink-400 mb-4">
-                  Grievance Portal
-                </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-                  As requested, you can submit your grievances for my viewing pleasure.
-                </p>
-              </div>
-            </header>
 
-            {/* Auth Buttons */}
-            <section className="container mx-auto px-4 pb-12 text-center">
-              <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+              {/* Search Bar with Typing Animation */}
+              <div className="w-full max-w-xl mb-8">
+                <div className="relative">
+                  <div className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-full shadow-sm hover:shadow-md transition-shadow duration-200 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-base min-h-[48px] flex items-center">
+                    <span className="flex-1">{displayText}</span>
+                    <span className="animate-pulse text-gray-400">|</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
                   onClick={() => setCurrentView('login')}
-                  className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded border border-gray-300 dark:border-gray-600 font-normal shadow-sm hover:shadow-md transition-all duration-200"
+                  variant="outline"
                 >
-                  👤 Login
+                  Login
                 </Button>
                 <Button 
                   onClick={() => setCurrentView('register')}
-                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded border border-gray-300 dark:border-gray-600 font-normal shadow-sm hover:shadow-md transition-all duration-200"
+                  variant="outline"
                 >
-                  📝 Register
+                  Register
                 </Button>
               </div>
-            </section>
+            </div>
 
-            {/* Features Section */}
-            <section className="container mx-auto px-4 py-16">
-              <div className="text-center mb-12">
-                <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">How It Works</h3>
-                <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                  Simple steps to help you and your partner communicate better and resolve issues together
+            {/* Footer */}
+            <footer className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4">
+              <div className="container mx-auto px-4 text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Built with love for better communication
                 </p>
               </div>
-              
-              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <CardHeader className="text-center">
-                    <div className="mx-auto bg-pink-100 dark:bg-pink-900/30 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                      <MessageSquare className="text-pink-600 dark:text-pink-400" size={24} />
-                    </div>
-                    <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">1. Share Your Concern</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                      Express your feelings and concerns in a safe, structured way that promotes understanding.
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-purple-200 dark:border-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <CardHeader className="text-center">
-                    <div className="mx-auto bg-purple-100 dark:bg-purple-900/30 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                      <Users className="text-purple-600 dark:text-purple-400" size={24} />
-                    </div>
-                    <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">2. Collaborate</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                      Work together to understand each other's perspectives and find common ground.
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-blue-200 dark:border-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  <CardHeader className="text-center">
-                    <div className="mx-auto bg-blue-100 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-                      <CheckCircle className="text-blue-600 dark:text-blue-400" size={24} />
-                    </div>
-                    <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-200">3. Take Action</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-                      Implement agreed-upon solutions and track progress together toward resolution.
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            {/* CTA Section */}
-            <section className="container mx-auto px-4 py-16">
-              <div className="bg-gradient-to-r from-pink-500 to-purple-600 dark:from-pink-600 dark:to-purple-700 rounded-3xl p-8 md:p-12 text-center text-white shadow-2xl">
-                <h3 className="text-3xl font-bold mb-4">Ready to Strengthen Your Relationship?</h3>
-                <p className="text-xl mb-8 opacity-90">
-                  Start your journey toward better communication and deeper understanding today.
-                </p>
-                <Button 
-                  onClick={() => setCurrentView('register')}
-                  className="bg-white text-purple-600 hover:bg-gray-100 dark:bg-gray-200 dark:text-purple-700 dark:hover:bg-gray-300 px-8 py-3 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                >
-                  Get Started Now
-                </Button>
-              </div>
-            </section>
+            </footer>
           </div>
         );
     }
