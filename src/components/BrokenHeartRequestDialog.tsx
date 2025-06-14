@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,15 +33,6 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
   const { toast } = useToast();
 
   const handleAccept = async () => {
-    if (showAcceptReason && !acceptReason.trim()) {
-      toast({
-        title: "Please add a message",
-        description: "Let your partner know why you're ready to start fresh.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     if (!showAcceptReason) {
       setShowAcceptReason(true);
       return;
@@ -52,7 +44,7 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
       await addDoc(collection(db, 'grievances'), {
         type: "partner_response",
         accepted: true,
-        reason: acceptReason.trim(),
+        reason: acceptReason.trim() || "Ready to start fresh together! 💕",
         partnerNickname: request.senderNickname || currentUserEmail,
         senderEmail: currentUserEmail,
         receiverEmail: request.senderEmail,
@@ -172,10 +164,11 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
                 <Textarea
                   value={acceptReason}
                   onChange={(e) => setAcceptReason(e.target.value)}
-                  placeholder="I'm ready because..."
+                  placeholder="I'm ready because... (optional)"
                   rows={3}
                   className="w-full"
                 />
+                <p className="text-xs text-green-600 mt-1">You can leave this blank if you prefer</p>
               </div>
             )}
 

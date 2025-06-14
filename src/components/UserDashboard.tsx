@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -163,7 +162,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     // Listen for partner responses to my clear all requests
     const partnerResponseQuery = query(
       collection(db, 'grievances'),
-      where('senderEmail', '==', currentUser.email),
+      where('receiverEmail', '==', currentUser.email),
       where('type', '==', 'partner_response')
     );
 
