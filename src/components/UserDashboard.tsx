@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -223,17 +224,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           </Button>
         </div>
 
-        {/* Debug Info */}
-        <div className="mb-4 p-4 bg-gray-100 rounded-lg text-sm">
-          <p><strong>Debug Info:</strong></p>
-          <p>Current User Email: {currentUser?.email}</p>
-          <p>User Nickname: {userData.nickname}</p>
-          <p>Partner Email: {userData.partnerEmail}</p>
-          <p>Sent Grievances: {sentGrievances.length}</p>
-          <p>Received Grievances: {receivedGrievances.length}</p>
-          <p>Partner Data Found: {partnerData ? 'Yes' : 'No'}</p>
-        </div>
-
         {/* User Profile Section */}
         <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-xl mb-8">
           <CardContent className="pt-6">
@@ -257,7 +247,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 </div>
                 <div className="text-center">
                   <p className="text-pink-500 font-semibold">Partner</p>
-                  <p className="text-sm text-gray-600">{partnerData?.nickname || "Not set"}</p>
+                  <p className="text-sm text-gray-600">{partnerData?.nickname || userData.partnerEmail}</p>
                 </div>
               </div>
             </div>
