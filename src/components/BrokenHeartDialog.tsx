@@ -18,7 +18,7 @@ export const BrokenHeartDialog = ({ isOpen, onClose, onSubmit }: BrokenHeartDial
 
   const handleSubmit = () => {
     if (reason.trim()) {
-      onSubmit(reason);
+      onSubmit(reason.trim());
       setReason("");
     }
   };

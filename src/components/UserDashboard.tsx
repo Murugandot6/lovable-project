@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, User, LogOut, Edit, MessageCircle, Eye, CheckCircle, HeartCrack } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { GrievanceResponse } from "./GrievanceResponse";
@@ -191,14 +191,18 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
 
   const handleBrokenHeartRequest = async (reason: string) => {
     try {
-      await addDoc(collection(db, 'brokenHeartRequests'), {
-        requesterEmail: currentUser?.email,
-        requesterNickname: userData.nickname,
-        partnerEmail: userData.partnerEmail,
+      const requestData = {
+        requesterEmail: currentUser?.email || '',
+        requesterNickname: userData.nickname || '',
+        partnerEmail: userData.partnerEmail || '',
         reason: reason,
         status: 'pending',
-        timestamp: new Date()
-      });
+        timestamp: serverTimestamp()
+      };
+
+      console.log("Sending broken heart request:", requestData);
+
+      await addDoc(collection(db, 'brokenHeartRequests'), requestData);
 
       toast({
         title: "Broken Heart Request Sent 💔",
@@ -210,7 +214,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       console.error("Error sending broken heart request:", error);
       toast({
         title: "Error",
-        description: "Failed to send request.",
+        description: "Failed to send request. Please try again.",
         variant: "destructive"
       });
     }
