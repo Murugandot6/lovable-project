@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +59,7 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
       return;
     }
 
-    if (!userData || !userData.email || !userData.partnerEmail) {
+    if (!userData || !userData.nickname || !userData.partnerEmail) {
       console.error("Missing userData or required fields:", userData);
       toast({
         title: "Error",
@@ -107,8 +106,8 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
         relationshipDuration: formData.relationshipDuration,
         timestamp: serverTimestamp(),
         senderId: currentUser.uid,
-        senderNickname: userData.nickname || userData.email,
-        senderEmail: userData.email,
+        senderNickname: userData.nickname,
+        senderEmail: currentUser.email, // Use currentUser.email instead of userData.email
         receiverId: partnerId,
         receiverEmail: userData.partnerEmail,
         status: "Pending"
