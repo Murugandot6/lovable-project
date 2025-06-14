@@ -53,7 +53,7 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
         type: "partner_response",
         accepted: true,
         reason: acceptReason.trim(),
-        partnerNickname: request.receiverNickname || currentUserEmail,
+        partnerNickname: request.senderNickname || currentUserEmail,
         senderEmail: currentUserEmail,
         receiverEmail: request.senderEmail,
         timestamp: serverTimestamp()
@@ -102,7 +102,7 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
         type: "partner_response",
         accepted: false,
         reason: declineReason.trim(),
-        partnerNickname: request.receiverNickname || currentUserEmail,
+        partnerNickname: request.senderNickname || currentUserEmail,
         senderEmail: currentUserEmail,
         receiverEmail: request.senderEmail,
         timestamp: serverTimestamp()
