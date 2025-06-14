@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,6 @@ import { UserDashboard } from "@/components/UserDashboard";
 import { ProfileEdit } from "@/components/ProfileEdit";
 import { ThankYouPage } from "@/components/ThankYouPage";
 import { AllGrievancesDashboard } from "@/components/AllGrievancesDashboard";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
@@ -116,12 +114,9 @@ const Index = () => {
         return <AuthForm mode="register" onBack={() => setCurrentView('home')} onAuthSuccess={handleAuthSuccess} />;
       default:
         return (
-          <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700">
+          <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">
             {/* Header */}
             <header className="container mx-auto px-4 py-8">
-              <div className="flex justify-end mb-4">
-                <ThemeToggle />
-              </div>
               <div className="flex items-center justify-center mb-8">
                 <Heart className="text-pink-500 mr-2" size={32} />
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
@@ -129,10 +124,10 @@ const Index = () => {
                 </h1>
               </div>
               <div className="text-center">
-                <h2 className="text-4xl font-bold text-pink-600 dark:text-pink-400 mb-4">
+                <h2 className="text-4xl font-bold text-pink-600 mb-4">
                   Grievance Portal
                 </h2>
-                <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
+                <p className="text-lg text-gray-600 mb-8">
                   As requested, you can submit your grievances for my viewing pleasure.
                 </p>
               </div>
