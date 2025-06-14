@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +42,13 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [partnerData, setPartnerData] = useState<any>(null);
 
   useEffect(() => {
-    if (!currentUser || !userData) return;
+    // Add proper guards to ensure all required data exists
+    if (!currentUser || !userData || !userData.email) {
+      console.log("Missing required data:", { currentUser: !!currentUser, userData: !!userData, email: userData?.email });
+      return;
+    }
+
+    console.log("Setting up grievance listeners for:", userData.email);
 
     // Load sent grievances
     const sentQuery = query(
@@ -53,14 +58,22 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     );
 
     const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
+      console.log("Sent grievances snapshot:", snapshot.docs.length);
       const grievances = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Grievance[];
       setSentGrievances(grievances);
+    }, (error) => {
+      console.error("Error loading sent grievances:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load sent grievances.",
+        variant: "destructive"
+      });
     });
 
-    // Load received grievances
+    // Load received grievances - only if userData.email exists
     const receivedQuery = query(
       collection(db, 'grievances'),
       where('receiverEmail', '==', userData.email),
@@ -68,23 +81,35 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     );
 
     const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
+      console.log("Received grievances snapshot:", snapshot.docs.length);
       const grievances = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Grievance[];
       setReceivedGrievances(grievances);
+    }, (error) => {
+      console.error("Error loading received grievances:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load received grievances.",
+        variant: "destructive"
+      });
     });
 
-    // Load partner data
+    // Load partner data - only if partnerEmail exists
     const loadPartnerData = async () => {
       if (userData.partnerEmail) {
-        const partnerQuery = query(
-          collection(db, 'users'),
-          where('email', '==', userData.partnerEmail)
-        );
-        const partnerSnapshot = await getDocs(partnerQuery);
-        if (!partnerSnapshot.empty) {
-          setPartnerData(partnerSnapshot.docs[0].data());
+        try {
+          const partnerQuery = query(
+            collection(db, 'users'),
+            where('email', '==', userData.partnerEmail)
+          );
+          const partnerSnapshot = await getDocs(partnerQuery);
+          if (!partnerSnapshot.empty) {
+            setPartnerData(partnerSnapshot.docs[0].data());
+          }
+        } catch (error) {
+          console.error("Error loading partner data:", error);
         }
       }
     };
@@ -95,7 +120,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       unsubscribeSent();
       unsubscribeReceived();
     };
-  }, [currentUser, userData]);
+  }, [currentUser, userData, toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-8">
