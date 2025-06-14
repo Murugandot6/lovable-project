@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { GrievanceResponse } from "./GrievanceResponse";
 import { GrievanceView } from "./GrievanceView";
 import { BrokenHeartDialog } from "./BrokenHeartDialog";
@@ -342,16 +344,17 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-pink-600">Welcome {userData.nickname}!</h1>
+          <h1 className="text-3xl font-bold text-pink-600 dark:text-pink-400">Welcome {userData.nickname}!</h1>
           <div className="flex gap-2">
+            <ThemeToggle />
             <Button 
               onClick={() => setShowBrokenHeartDialog(true)}
               variant="outline"
-              className="text-red-600 border-red-300 hover:bg-red-50"
+              className="text-red-600 dark:text-red-400 border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               <HeartCrack className="mr-2" size={16} />
               Clear All
@@ -359,7 +362,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             <Button 
               onClick={onLogout}
               variant="outline"
-              className="text-pink-600 border-pink-300 hover:bg-pink-50"
+              className="text-pink-600 dark:text-pink-400 border-pink-300 dark:border-pink-700 hover:bg-pink-50 dark:hover:bg-pink-900/20"
             >
               <LogOut className="mr-2" size={16} />
               Logout
@@ -368,15 +371,15 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         </div>
 
         {/* User Profile Section */}
-        <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-xl mb-8">
+        <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-xl mb-8">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center space-x-4">
-                <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center border-4 border-red-200 text-3xl">
+                <div className="bg-red-100 dark:bg-red-900/30 w-20 h-20 rounded-full flex items-center justify-center border-4 border-red-200 dark:border-red-700 text-3xl">
                   {userData.userIcon || "❤️"}
                 </div>
-                <Heart className="text-pink-500" size={24} />
-                <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center border-4 border-gray-200 text-3xl">
+                <Heart className="text-pink-500 dark:text-pink-400" size={24} />
+                <div className="bg-gray-100 dark:bg-gray-700 w-20 h-20 rounded-full flex items-center justify-center border-4 border-gray-200 dark:border-gray-600 text-3xl">
                   {partnerData?.userIcon || "💜"}
                 </div>
               </div>
@@ -385,19 +388,19 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             <div className="text-center mb-6">
               <div className="flex justify-center space-x-8">
                 <div className="text-center">
-                  <p className="text-red-500 font-semibold">You</p>
-                  <p className="text-sm text-gray-600">{userData.nickname}</p>
+                  <p className="text-red-500 dark:text-red-400 font-semibold">You</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{userData.nickname}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-pink-500 font-semibold">Partner</p>
-                  <p className="text-sm text-gray-600">{partnerData?.nickname || userData.partnerEmail}</p>
+                  <p className="text-pink-500 dark:text-pink-400 font-semibold">Partner</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{partnerData?.nickname || userData.partnerEmail}</p>
                 </div>
               </div>
             </div>
 
             <Button 
               onClick={onEditProfile}
-              className="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold mb-4"
+              className="w-full bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white py-3 rounded-lg font-semibold mb-4"
             >
               <Edit className="mr-2" size={16} />
               Edit Profile
@@ -408,10 +411,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         {/* Grievances Section with View All Button */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Your Grievances</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Your Grievances</h2>
             <Button 
               onClick={handleViewAllGrievances}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 dark:from-purple-600 dark:to-pink-600 dark:hover:from-purple-700 dark:hover:to-pink-700 text-white"
             >
               <BarChart3 className="mr-2" size={16} />
               View All Dashboard
@@ -419,16 +422,16 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           </div>
           
           <div className="grid md:grid-cols-2 gap-6">
-            <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-lg">
+            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-pink-600 flex items-center">
+                <CardTitle className="text-lg font-semibold text-pink-600 dark:text-pink-400 flex items-center">
                   <span className="mr-2">📤</span>
                   Grievances You've Sent ({sentGrievances.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {sentGrievances.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No grievances sent yet.</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No grievances sent yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {sentGrievances.slice(0, 3).map((grievance, index) => (
@@ -436,27 +439,27 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                         key={grievance.id} 
                         className={`p-3 rounded-lg border transition-colors ${
                           index === 0 
-                            ? 'bg-pink-100 border-pink-400 ring-2 ring-pink-300' 
-                            : 'bg-pink-50 border-pink-200 hover:border-pink-300'
+                            ? 'bg-pink-100 dark:bg-pink-900/30 border-pink-400 dark:border-pink-600 ring-2 ring-pink-300 dark:ring-pink-600' 
+                            : 'bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-700 hover:border-pink-300 dark:hover:border-pink-600'
                         }`}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-800">{grievance.title}</p>
-                            <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
-                            <p className="text-xs text-gray-500">To: {partnerData?.nickname || grievance.receiverEmail}</p>
+                            <p className="font-medium text-gray-800 dark:text-gray-200">{grievance.title}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 capitalize">{grievance.status}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">To: {partnerData?.nickname || grievance.receiverEmail}</p>
                             {grievance.mood && (
-                              <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
+                              <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">{grievance.mood}</p>
                             )}
                             {grievance.responses && grievance.responses.length > 0 && (
-                              <p className="text-xs text-green-600 font-medium">{grievance.responses.length} response(s)</p>
+                              <p className="text-xs text-green-600 dark:text-green-400 font-medium">{grievance.responses.length} response(s)</p>
                             )}
                           </div>
                           <div className="flex gap-2">
                             <Button
                               onClick={() => handleViewGrievance(grievance, 'view')}
                               size="sm"
-                              className="bg-pink-500 hover:bg-pink-600 text-white"
+                              className="bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white"
                             >
                               <Eye className="mr-1" size={14} />
                               View
@@ -465,7 +468,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                               <Button
                                 onClick={() => handleMarkResolved(grievance.id)}
                                 size="sm"
-                                className="bg-green-500 hover:bg-green-600 text-white"
+                                className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white"
                               >
                                 <CheckCircle className="mr-1" size={14} />
                                 Resolve
@@ -480,16 +483,16 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-200 dark:border-purple-700 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-purple-600 flex items-center">
+                <CardTitle className="text-lg font-semibold text-purple-600 dark:text-purple-400 flex items-center">
                   <span className="mr-2">📥</span>
                   Grievances You've Received ({receivedGrievances.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {receivedGrievances.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No grievances received yet.</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No grievances received yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {receivedGrievances.slice(0, 3).map((grievance, index) => (
@@ -497,23 +500,23 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                         key={grievance.id} 
                         className={`p-3 rounded-lg border transition-colors ${
                           index === 0 
-                            ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-300' 
-                            : 'bg-purple-50 border-purple-200 hover:border-purple-300'
+                            ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-400 dark:border-purple-600 ring-2 ring-purple-300 dark:ring-purple-600' 
+                            : 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700 hover:border-purple-300 dark:hover:border-purple-600'
                         }`}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-800">{grievance.title}</p>
-                            <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
-                            <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
+                            <p className="font-medium text-gray-800 dark:text-gray-200">{grievance.title}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 capitalize">{grievance.status}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">From: {grievance.senderNickname}</p>
                             {grievance.mood && (
-                              <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
+                              <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">{grievance.mood}</p>
                             )}
                           </div>
                           <Button
                             onClick={() => handleViewGrievance(grievance, 'respond')}
                             size="sm"
-                            className="bg-purple-500 hover:bg-purple-600 text-white"
+                            className="bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
                           >
                             <MessageCircle className="mr-1" size={14} />
                             Respond
@@ -529,11 +532,11 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         </div>
 
         {/* Submit New Grievance Button */}
-        <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-xl">
+        <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-xl">
           <CardContent className="py-6">
             <Button 
               onClick={onSubmitGrievance}
-              className="w-full bg-pink-500 hover:bg-pink-600 text-white py-4 rounded-lg font-semibold text-lg"
+              className="w-full bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white py-4 rounded-lg font-semibold text-lg"
             >
               📝 Submit a New Grievance
             </Button>
