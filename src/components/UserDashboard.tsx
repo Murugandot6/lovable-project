@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { GrievanceResponse } from "./GrievanceResponse";
 import { GrievanceView } from "./GrievanceView";
 import { BrokenHeartDialog } from "./BrokenHeartDialog";
+import { BrokenHeartRequestDialog } from "./BrokenHeartRequestDialog";
 
 interface UserData {
   uid: string;
@@ -49,6 +49,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [selectedGrievance, setSelectedGrievance] = useState<Grievance | null>(null);
   const [viewMode, setViewMode] = useState<'respond' | 'view'>('respond');
   const [showBrokenHeartDialog, setShowBrokenHeartDialog] = useState(false);
+  const [brokenHeartRequest, setBrokenHeartRequest] = useState<any>(null);
 
   useEffect(() => {
     if (!currentUser || !userData || !currentUser.email) {
@@ -67,7 +68,8 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
 
     const sentQuery = query(
       collection(db, 'grievances'),
-      where('senderId', '==', currentUser.uid)
+      where('senderId', '==', currentUser.uid),
+      where('type', '!=', 'broken_heart_request')
     );
 
     const unsubscribeSent = onSnapshot(sentQuery, (snapshot) => {
@@ -100,7 +102,8 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
 
     const receivedQuery = query(
       collection(db, 'grievances'),
-      where('receiverEmail', '==', currentUser.email)
+      where('receiverEmail', '==', currentUser.email),
+      where('type', '!=', 'broken_heart_request')
     );
 
     const unsubscribeReceived = onSnapshot(receivedQuery, (snapshot) => {
@@ -131,6 +134,29 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       });
     });
 
+    // Listen for broken heart requests
+    const brokenHeartQuery = query(
+      collection(db, 'grievances'),
+      where('receiverEmail', '==', currentUser.email),
+      where('type', '==', 'broken_heart_request')
+    );
+
+    const unsubscribeBrokenHeart = onSnapshot(brokenHeartQuery, (snapshot) => {
+      console.log("Broken heart requests snapshot received:", snapshot.docs.length, "documents");
+      if (!snapshot.empty) {
+        const request = {
+          id: snapshot.docs[0].id,
+          ...snapshot.docs[0].data()
+        };
+        console.log("Setting broken heart request:", request);
+        setBrokenHeartRequest(request);
+      } else {
+        setBrokenHeartRequest(null);
+      }
+    }, (error) => {
+      console.error("Error loading broken heart requests:", error);
+    });
+
     const loadPartnerData = async () => {
       if (userData.partnerEmail) {
         try {
@@ -158,6 +184,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     return () => {
       unsubscribeSent();
       unsubscribeReceived();
+      unsubscribeBrokenHeart();
     };
   }, [currentUser, userData, toast]);
 
@@ -439,6 +466,14 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           onClose={() => setShowBrokenHeartDialog(false)}
           onSubmit={handleBrokenHeartRequest}
         />
+
+      {brokenHeartRequest && (
+        <BrokenHeartRequestDialog
+          request={brokenHeartRequest}
+          onClose={() => setBrokenHeartRequest(null)}
+          currentUserEmail={currentUser?.email || ''}
+        />
+      )}
       </div>
     </div>
   );
