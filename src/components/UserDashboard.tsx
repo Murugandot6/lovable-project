@@ -13,7 +13,6 @@ import { BrokenHeartDialog } from "./BrokenHeartDialog";
 import { BrokenHeartRequestDialog } from "./BrokenHeartRequestDialog";
 import { ClearAllConfirmationDialog } from "./ClearAllConfirmationDialog";
 import { PartnerResponseDialog } from "./PartnerResponseDialog";
-import { DailyGratitude } from "./DailyGratitude";
 
 interface UserData {
   uid: string;
@@ -21,7 +20,6 @@ interface UserData {
   nickname: string;
   partnerEmail: string;
   userIcon: string;
-  loveLanguage: string;
 }
 
 interface UserDashboardProps {
@@ -59,7 +57,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [brokenHeartRequest, setBrokenHeartRequest] = useState<any>(null);
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [partnerResponse, setPartnerResponse] = useState<any>(null);
-  const [showGratitude, setShowGratitude] = useState(false);
 
   useEffect(() => {
     if (!currentUser || !userData || !currentUser.email) {
@@ -325,15 +322,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     }
   };
 
-  if (showGratitude) {
-    return (
-      <DailyGratitude 
-        userData={userData}
-        onBack={() => setShowGratitude(false)}
-      />
-    );
-  }
-
   if (selectedGrievance) {
     if (viewMode === 'respond') {
       return (
@@ -379,53 +367,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
               Logout
             </Button>
           </div>
-        </div>
-
-        {/* Romantic Features Section */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-pink-600 dark:text-pink-400 flex items-center">
-                <Heart className="mr-2" size={20} />
-                Daily Connection
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={() => setShowGratitude(true)}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 dark:from-pink-600 dark:to-purple-600 dark:hover:from-pink-700 dark:hover:to-purple-700 text-white"
-              >
-                💝 Share Daily Gratitude
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-200 dark:border-purple-700 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-purple-600 dark:text-purple-400 flex items-center">
-                <User className="mr-2" size={20} />
-                Love Languages
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center mb-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                  Your Love Language: {userData.loveLanguage ? 
-                    userData.loveLanguage.split('_').map(word => 
-                      word.charAt(0).toUpperCase() + word.slice(1)
-                    ).join(' ') : 'Not set'
-                  }
-                </p>
-                <Button 
-                  onClick={onEditProfile}
-                  variant="outline"
-                  className="text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700"
-                >
-                  💬 Update Love Language
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* User Profile Section */}
