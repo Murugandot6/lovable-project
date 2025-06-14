@@ -1,9 +1,7 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Heart, Send } from "lucide-react";
@@ -14,157 +12,95 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface GrievanceFormProps {
   onBack: () => void;
-  onSubmitted: () => void;
+  onSuccess: () => void;
+  userData: any;
 }
 
-const moodOptions = [
-  { value: "😊 Happy", label: "😊 Happy" },
-  { value: "😢 Sad", label: "😢 Sad" },
-  { value: "😠 Angry", label: "😠 Angry" },
-  { value: "😰 Anxious", label: "😰 Anxious" },
-  { value: "😔 Disappointed", label: "😔 Disappointed" },
-  { value: "😕 Confused", label: "😕 Confused" },
-  { value: "😤 Frustrated", label: "😤 Frustrated" },
-  { value: "😞 Hurt", label: "😞 Hurt" },
-  { value: "😟 Worried", label: "😟 Worried" },
-  { value: "🤔 Thoughtful", label: "🤔 Thoughtful" }
-];
-
-export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
+export const GrievanceForm = ({ onBack, onSuccess, userData }: GrievanceFormProps) => {
   const { toast } = useToast();
-  const { currentUser, userData } = useAuth();
+  const { currentUser } = useAuth();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("medium");
+  const [mood, setMood] = useState("confused");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [partnerData, setPartnerData] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    concernTitle: "",
-    description: "",
-    priority: "",
-    desiredOutcome: "",
-    mood: ""
-  });
 
-  useEffect(() => {
-    const loadPartnerData = async () => {
-      if (userData?.partnerEmail) {
-        try {
-          const partnerQuery = query(
-            collection(db, 'users'),
-            where('email', '==', userData.partnerEmail)
-          );
-          const partnerSnapshot = await getDocs(partnerQuery);
-          if (!partnerSnapshot.empty) {
-            const partner = partnerSnapshot.docs[0].data();
-            setPartnerData(partner);
-          }
-        } catch (error) {
-          console.error("Error loading partner data:", error);
-        }
-      }
-    };
-
-    loadPartnerData();
-  }, [userData]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    
-    console.log("Starting grievance submission...");
-    console.log("Current user:", !!currentUser);
-    console.log("User data:", userData);
-    console.log("Form data:", formData);
-    
-    if (!currentUser) {
-      console.error("No current user found");
-      toast({
-        title: "Error",
-        description: "You must be logged in to submit a grievance.",
-        variant: "destructive"
-      });
-      return;
-    }
 
-    if (!userData || !userData.nickname || !userData.partnerEmail) {
-      console.error("Missing userData or required fields:", userData);
+    if (!title.trim() || !description.trim()) {
       toast({
-        title: "Error",
-        description: "Please complete your profile before submitting a grievance.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.concernTitle || !formData.description || !formData.priority || !formData.mood) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
+        title: "Missing fields",
+        description: "Please fill in all fields.",
+        variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      console.log("Looking for partner with email:", userData.partnerEmail);
-      
-      let partnerId = null;
-      const partnerQuery = query(
-        collection(db, 'users'), 
-        where('email', '==', userData.partnerEmail)
-      );
-      const partnerSnapshot = await getDocs(partnerQuery);
-      
-      if (!partnerSnapshot.empty) {
-        partnerId = partnerSnapshot.docs[0].id;
-        console.log("Found partner with ID:", partnerId);
-      } else {
-        console.log("Partner not found, continuing without partnerId");
+      if (!currentUser?.email || !userData?.partnerEmail) {
+        console.error("Current user or partner email is missing.");
+        toast({
+          title: "Error",
+          description: "Failed to submit grievance. User or partner information is incomplete.",
+          variant: "destructive",
+        });
+        return;
       }
 
       const grievanceData = {
-        title: formData.concernTitle,
-        description: formData.description,
-        priority: formData.priority,
-        desiredOutcome: formData.desiredOutcome,
-        mood: formData.mood,
+        title: title.trim(),
+        description: description.trim(),
+        priority: priority,
+        status: "pending",
         timestamp: serverTimestamp(),
-        senderId: currentUser.uid,
-        senderNickname: userData.nickname,
+        senderNickname: userData.nickname || '',
         senderEmail: currentUser.email,
-        receiverId: partnerId,
         receiverEmail: userData.partnerEmail,
-        status: "Pending"
+        senderId: currentUser?.uid || '',
+        receiverId: '', // Will be filled when partner responds
+        mood: mood,
+        responses: [],
       };
 
-      console.log("Submitting grievance data:", grievanceData);
+      console.log("Submitting grievance:", grievanceData);
 
-      const docRef = await addDoc(collection(db, 'grievances'), grievanceData);
-      console.log("Grievance saved with ID:", docRef.id);
-      
+      await addDoc(collection(db, 'grievances'), grievanceData);
+
       toast({
-        title: "Concern Submitted Successfully! 💕",
-        description: "Your concern has been recorded. Check the dashboard to track progress.",
+        title: "Grievance Submitted! 🚀",
+        description: "Your concern has been sent to your partner.",
       });
-      
-      onSubmitted();
+      onSuccess();
     } catch (error) {
-      console.error("Detailed grievance submission error:", error);
+      console.error("Error submitting grievance:", error);
       toast({
-        title: "Submission Failed",
-        description: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to submit grievance. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const moodOptions = [
+    { value: "frustrated", label: "😤 Frustrated", color: "text-red-500" },
+    { value: "sad", label: "😢 Sad", color: "text-blue-500" },
+    { value: "confused", label: "😕 Confused", color: "text-yellow-500" },
+    { value: "angry", label: "😠 Angry", color: "text-red-600" },
+    { value: "disappointed", label: "😞 Disappointed", color: "text-gray-500" },
+    { value: "hopeful", label: "🤞 Hopeful", color: "text-green-500" },
+    { value: "love", label: "💕 Love", color: "text-pink-500" }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
-        <Button 
+        <Button
           onClick={onBack}
-          variant="ghost" 
+          variant="ghost"
           className="mb-6 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
         >
           <ArrowLeft className="mr-2" size={20} />
@@ -172,97 +108,89 @@ export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
         </Button>
 
         <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-xl">
-          <CardHeader className="text-center pb-6">
-            <div className="mx-auto bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-              <Heart className="text-pink-600" size={24} />
-            </div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-              Share Your Concern
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-pink-600 flex items-center">
+              <Heart className="mr-2" size={24} />
+              Submit a New Grievance
             </CardTitle>
-            <p className="text-gray-600 mt-2">
-              Express your feelings to {partnerData?.nickname || userData?.partnerEmail} in a safe space
-            </p>
           </CardHeader>
-          
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="title" className="text-gray-700">Concern Title</Label>
-                <Input
-                  id="title"
-                  value={formData.concernTitle}
-                  onChange={(e) => setFormData({...formData, concernTitle: e.target.value})}
-                  placeholder="Brief title for your concern"
-                  required
-                  className="border-pink-200 focus:border-pink-400"
-                />
-              </div>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Title of Concern
+              </label>
+              <Input
+                type="text"
+                placeholder="A brief summary of your concern"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="mood" className="text-gray-700">How are you feeling?</Label>
-                <Select value={formData.mood} onValueChange={(value) => setFormData({...formData, mood: value})}>
-                  <SelectTrigger className="border-pink-200 focus:border-pink-400">
-                    <SelectValue placeholder="Select your mood" />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Describe the Issue
+              </label>
+              <Textarea
+                placeholder="Explain the situation, how it makes you feel, and what you need."
+                rows={5}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority
+                </label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent>
-                    {moodOptions.map((mood) => (
-                      <SelectItem key={mood.value} value={mood.value}>
-                        {mood.label}
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Mood
+                </label>
+                <Select value={mood} onValueChange={setMood}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="How are you feeling?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {moodOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        <span className={option.color}>{option.label}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="priority" className="text-gray-700">Priority Level</Label>
-                <Select value={formData.priority} onValueChange={(value) => setFormData({...formData, priority: value})}>
-                  <SelectTrigger className="border-pink-200 focus:border-pink-400">
-                    <SelectValue placeholder="Select priority level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low - Can wait</SelectItem>
-                    <SelectItem value="medium">Medium - Should address soon</SelectItem>
-                    <SelectItem value="high">High - Needs immediate attention</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-gray-700">Detailed Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Describe your concern in detail. What happened? How did it make you feel?"
-                  required
-                  rows={5}
-                  className="border-pink-200 focus:border-pink-400"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="outcome" className="text-gray-700">Desired Outcome</Label>
-                <Textarea
-                  id="outcome"
-                  value={formData.desiredOutcome}
-                  onChange={(e) => setFormData({...formData, desiredOutcome: e.target.value})}
-                  placeholder="What would you like to see happen? How can this be resolved?"
-                  required
-                  rows={3}
-                  className="border-pink-200 focus:border-pink-400"
-                />
-              </div>
-
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="mr-2" size={20} />
-                {isSubmitting ? 'Submitting...' : 'Submit Concern'}
-              </Button>
-            </form>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+            >
+              {isSubmitting ? (
+                <>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2" size={16} />
+                  Submit Grievance
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
       </div>

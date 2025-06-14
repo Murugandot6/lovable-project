@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { HeartCrack, X, Check } from "lucide-react";
-import { doc, updateDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, deleteDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,56 +25,54 @@ interface BrokenHeartRequestDialogProps {
 
 export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }: BrokenHeartRequestDialogProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showReasonInput, setShowReasonInput] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
+  const [acceptReason, setAcceptReason] = useState("");
+  const [showAcceptReason, setShowAcceptReason] = useState(false);
   const { toast } = useToast();
 
   const handleAccept = async () => {
+    if (showAcceptReason && !acceptReason.trim()) {
+      toast({
+        title: "Please add a message",
+        description: "Let your partner know why you're ready to start fresh.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!showAcceptReason) {
+      setShowAcceptReason(true);
+      return;
+    }
+
     setIsProcessing(true);
     try {
-      // Delete all grievances for both users
-      const grievancesQuery1 = query(
-        collection(db, 'grievances'),
-        where('senderEmail', '==', request.senderEmail)
-      );
-      const grievancesQuery2 = query(
-        collection(db, 'grievances'),
-        where('receiverEmail', '==', request.senderEmail)
-      );
-      const grievancesQuery3 = query(
-        collection(db, 'grievances'),
-        where('senderEmail', '==', currentUserEmail)
-      );
-      const grievancesQuery4 = query(
-        collection(db, 'grievances'),
-        where('receiverEmail', '==', currentUserEmail)
-      );
+      // Send acceptance response to partner
+      await addDoc(collection(db, 'grievances'), {
+        type: "partner_response",
+        accepted: true,
+        reason: acceptReason.trim(),
+        partnerNickname: request.receiverNickname || currentUserEmail,
+        senderEmail: currentUserEmail,
+        receiverEmail: request.senderEmail,
+        timestamp: serverTimestamp()
+      });
 
-      const [snapshot1, snapshot2, snapshot3, snapshot4] = await Promise.all([
-        getDocs(grievancesQuery1),
-        getDocs(grievancesQuery2),
-        getDocs(grievancesQuery3),
-        getDocs(grievancesQuery4)
-      ]);
-
-      const deletePromises = [
-        ...snapshot1.docs.map(doc => deleteDoc(doc.ref)),
-        ...snapshot2.docs.map(doc => deleteDoc(doc.ref)),
-        ...snapshot3.docs.map(doc => deleteDoc(doc.ref)),
-        ...snapshot4.docs.map(doc => deleteDoc(doc.ref))
-      ];
-
-      await Promise.all(deletePromises);
+      // Delete the original request
+      await deleteDoc(doc(db, 'grievances', request.id));
 
       toast({
-        title: "All Grievances Cleared! 💕",
-        description: "You and your partner are starting fresh together.",
+        title: "Response Sent! 💕",
+        description: "Your partner will see your acceptance and can proceed with clearing all grievances.",
       });
 
       onClose();
     } catch (error) {
-      console.error("Error clearing grievances:", error);
+      console.error("Error sending acceptance:", error);
       toast({
         title: "Error",
-        description: "Failed to clear grievances. Please try again.",
+        description: "Failed to send response. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -83,20 +81,51 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
   };
 
   const handleDecline = async () => {
-    try {
-      await deleteDoc(doc(db, 'grievances', request.id));
+    if (showReasonInput && !declineReason.trim()) {
       toast({
-        title: "Request Declined",
-        description: "The clear all request has been declined.",
-      });
-      onClose();
-    } catch (error) {
-      console.error("Error declining request:", error);
-      toast({
-        title: "Error",
-        description: "Failed to decline request. Please try again.",
+        title: "Please add a reason",
+        description: "Help your partner understand your perspective.",
         variant: "destructive"
       });
+      return;
+    }
+
+    if (!showReasonInput) {
+      setShowReasonInput(true);
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Send decline response to partner
+      await addDoc(collection(db, 'grievances'), {
+        type: "partner_response",
+        accepted: false,
+        reason: declineReason.trim(),
+        partnerNickname: request.receiverNickname || currentUserEmail,
+        senderEmail: currentUserEmail,
+        receiverEmail: request.senderEmail,
+        timestamp: serverTimestamp()
+      });
+
+      // Delete the original request
+      await deleteDoc(doc(db, 'grievances', request.id));
+
+      toast({
+        title: "Response Sent",
+        description: "Your partner has been notified of your decision.",
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Error sending decline:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send response. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -135,6 +164,36 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
               <p className="text-gray-800 italic">"{request.description}"</p>
             </div>
 
+            {showAcceptReason && (
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <label className="block text-sm font-medium text-green-700 mb-2">
+                  Share why you're ready to start fresh (optional):
+                </label>
+                <Textarea
+                  value={acceptReason}
+                  onChange={(e) => setAcceptReason(e.target.value)}
+                  placeholder="I'm ready because..."
+                  rows={3}
+                  className="w-full"
+                />
+              </div>
+            )}
+
+            {showReasonInput && (
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <label className="block text-sm font-medium text-orange-700 mb-2">
+                  Please explain why you're not ready yet:
+                </label>
+                <Textarea
+                  value={declineReason}
+                  onChange={(e) => setDeclineReason(e.target.value)}
+                  placeholder="I need more time because..."
+                  rows={3}
+                  className="w-full"
+                />
+              </div>
+            )}
+
             <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
               <p className="text-sm text-yellow-800">
                 ⚠️ This will permanently delete all grievances for both of you.
@@ -148,7 +207,7 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
                 className="flex-1 bg-green-500 hover:bg-green-600 text-white"
               >
                 <Check className="mr-2" size={16} />
-                {isProcessing ? "Clearing..." : "Accept & Clear All"}
+                {showAcceptReason ? (isProcessing ? "Sending..." : "Send Accept") : "Accept"}
               </Button>
               <Button
                 onClick={handleDecline}
@@ -156,7 +215,7 @@ export const BrokenHeartRequestDialog = ({ request, onClose, currentUserEmail }:
                 variant="outline"
                 className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
               >
-                Decline
+                {showReasonInput ? (isProcessing ? "Sending..." : "Send Decline") : "Decline"}
               </Button>
             </div>
           </div>

@@ -10,6 +10,8 @@ import { GrievanceResponse } from "./GrievanceResponse";
 import { GrievanceView } from "./GrievanceView";
 import { BrokenHeartDialog } from "./BrokenHeartDialog";
 import { BrokenHeartRequestDialog } from "./BrokenHeartRequestDialog";
+import { ClearAllConfirmationDialog } from "./ClearAllConfirmationDialog";
+import { PartnerResponseDialog } from "./PartnerResponseDialog";
 
 interface UserData {
   uid: string;
@@ -50,6 +52,8 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [viewMode, setViewMode] = useState<'respond' | 'view'>('respond');
   const [showBrokenHeartDialog, setShowBrokenHeartDialog] = useState(false);
   const [brokenHeartRequest, setBrokenHeartRequest] = useState<any>(null);
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
+  const [partnerResponse, setPartnerResponse] = useState<any>(null);
 
   useEffect(() => {
     if (!currentUser || !userData || !currentUser.email) {
@@ -66,9 +70,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     console.log("Current user UID:", currentUser.uid);
     console.log("Partner email:", userData.partnerEmail);
 
+    // Fixed query for sent grievances
     const sentQuery = query(
       collection(db, 'grievances'),
-      where('senderId', '==', currentUser.uid),
+      where('senderEmail', '==', currentUser.email),
       where('type', '!=', 'broken_heart_request')
     );
 
@@ -157,6 +162,25 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       console.error("Error loading broken heart requests:", error);
     });
 
+    // Listen for partner responses to my clear all requests
+    const partnerResponseQuery = query(
+      collection(db, 'grievances'),
+      where('senderEmail', '==', currentUser.email),
+      where('type', '==', 'partner_response')
+    );
+
+    const unsubscribePartnerResponse = onSnapshot(partnerResponseQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        const response = {
+          id: snapshot.docs[0].id,
+          ...snapshot.docs[0].data()
+        };
+        setPartnerResponse(response);
+      } else {
+        setPartnerResponse(null);
+      }
+    });
+
     const loadPartnerData = async () => {
       if (userData.partnerEmail) {
         try {
@@ -185,6 +209,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       unsubscribeSent();
       unsubscribeReceived();
       unsubscribeBrokenHeart();
+      unsubscribePartnerResponse();
     };
   }, [currentUser, userData, toast]);
 
@@ -229,10 +254,10 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         senderEmail: currentUser?.email || '',
         receiverEmail: userData.partnerEmail || '',
         senderId: currentUser?.uid || '',
-        receiverId: '', // Will be filled when partner responds
+        receiverId: '',
         mood: "hopeful",
         responses: [],
-        type: "broken_heart_request" // Special type to identify broken heart requests
+        type: "broken_heart_request"
       };
 
       console.log("Sending broken heart request as grievance:", requestData);
@@ -250,6 +275,46 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
       toast({
         title: "Error",
         description: "Failed to send request. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleConfirmClearAll = async () => {
+    try {
+      // Delete all grievances for both users
+      const grievancesQuery1 = query(
+        collection(db, 'grievances'),
+        where('senderEmail', '==', currentUser?.email)
+      );
+      const grievancesQuery2 = query(
+        collection(db, 'grievances'),
+        where('receiverEmail', '==', currentUser?.email)
+      );
+
+      const [snapshot1, snapshot2] = await Promise.all([
+        getDocs(grievancesQuery1),
+        getDocs(grievancesQuery2)
+      ]);
+
+      const deletePromises = [
+        ...snapshot1.docs.map(doc => deleteDoc(doc.ref)),
+        ...snapshot2.docs.map(doc => deleteDoc(doc.ref))
+      ];
+
+      await Promise.all(deletePromises);
+
+      toast({
+        title: "All Grievances Cleared! 💕",
+        description: "You and your partner are starting fresh together.",
+      });
+
+      setShowConfirmationDialog(false);
+    } catch (error) {
+      console.error("Error clearing grievances:", error);
+      toast({
+        title: "Error",
+        description: "Failed to clear grievances. Please try again.",
         variant: "destructive"
       });
     }
@@ -467,13 +532,31 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           onSubmit={handleBrokenHeartRequest}
         />
 
-      {brokenHeartRequest && (
-        <BrokenHeartRequestDialog
-          request={brokenHeartRequest}
-          onClose={() => setBrokenHeartRequest(null)}
-          currentUserEmail={currentUser?.email || ''}
-        />
-      )}
+        {brokenHeartRequest && (
+          <BrokenHeartRequestDialog
+            request={brokenHeartRequest}
+            onClose={() => setBrokenHeartRequest(null)}
+            currentUserEmail={currentUser?.email || ''}
+          />
+        )}
+
+        {showConfirmationDialog && (
+          <ClearAllConfirmationDialog
+            onConfirm={handleConfirmClearAll}
+            onCancel={() => setShowConfirmationDialog(false)}
+          />
+        )}
+
+        {partnerResponse && (
+          <PartnerResponseDialog
+            response={partnerResponse}
+            onClose={() => setPartnerResponse(null)}
+            onProceed={() => {
+              setPartnerResponse(null);
+              setShowConfirmationDialog(true);
+            }}
+          />
+        )}
       </div>
     </div>
   );
