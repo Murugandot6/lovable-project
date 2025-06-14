@@ -9,7 +9,7 @@ interface UserData {
   email: string;
   nickname: string;
   partnerEmail: string;
-  isLoggedIn: boolean;
+  userIcon?: string;
 }
 
 interface UserDashboardProps {
@@ -54,8 +54,8 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           <CardContent className="pt-6">
             <div className="flex items-center justify-center mb-6">
               <div className="flex items-center space-x-4">
-                <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center border-4 border-red-200">
-                  <Heart className="text-red-500" size={32} />
+                <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center border-4 border-red-200 text-3xl">
+                  {userData.userIcon || "❤️"}
                 </div>
                 <Heart className="text-pink-500" size={24} />
                 <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center border-4 border-gray-200">

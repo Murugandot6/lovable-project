@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface GrievanceFormProps {
   onBack: () => void;
+  onSubmitted: () => void;
 }
 
-export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
+export const GrievanceForm = ({ onBack, onSubmitted }: GrievanceFormProps) => {
   const { toast } = useToast();
   const [userData, setUserData] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -62,16 +63,8 @@ export const GrievanceForm = ({ onBack }: GrievanceFormProps) => {
       description: "Your concern has been recorded. Check the dashboard to track progress.",
     });
     
-    // Reset form
-    setFormData({
-      partnerName1: userData?.nickname || "",
-      partnerName2: userData?.partnerEmail || "",
-      relationshipDuration: "",
-      concernTitle: "",
-      description: "",
-      priority: "",
-      desiredOutcome: ""
-    });
+    // Navigate to thank you page
+    onSubmitted();
   };
 
   return (

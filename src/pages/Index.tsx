@@ -8,11 +8,12 @@ import { GrievanceDashboard } from "@/components/GrievanceDashboard";
 import { AuthForm } from "@/components/AuthForm";
 import { UserDashboard } from "@/components/UserDashboard";
 import { ProfileEdit } from "@/components/ProfileEdit";
+import { ThankYouPage } from "@/components/ThankYouPage";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { currentUser, userData } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou'>('home');
 
   useEffect(() => {
     if (currentUser && userData) {
@@ -78,7 +79,14 @@ const Index = () => {
             />
           );
         case 'submit':
-          return <GrievanceForm onBack={() => setCurrentView('userDashboard')} />;
+          return (
+            <GrievanceForm 
+              onBack={() => setCurrentView('userDashboard')} 
+              onSubmitted={() => setCurrentView('thankYou')}
+            />
+          );
+        case 'thankYou':
+          return <ThankYouPage onBack={() => setCurrentView('userDashboard')} />;
         case 'dashboard':
           return <GrievanceDashboard onBack={() => setCurrentView('userDashboard')} />;
         default:
