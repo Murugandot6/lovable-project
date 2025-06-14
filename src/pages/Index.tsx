@@ -8,89 +8,96 @@ import { GrievanceDashboard } from "@/components/GrievanceDashboard";
 import { AuthForm } from "@/components/AuthForm";
 import { UserDashboard } from "@/components/UserDashboard";
 import { ProfileEdit } from "@/components/ProfileEdit";
-
-interface UserData {
-  email: string;
-  nickname: string;
-  partnerEmail: string;
-  isLoggedIn: boolean;
-}
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { currentUser, userData } = useAuth();
   const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile'>('home');
-  const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const stored = localStorage.getItem('userData');
-    if (stored) {
-      const user = JSON.parse(stored);
-      if (user.isLoggedIn) {
-        setUserData(user);
+    if (currentUser && userData) {
+      if (!userData.nickname || !userData.partnerEmail) {
+        setCurrentView('editProfile');
+      } else {
         setCurrentView('userDashboard');
       }
+    } else if (currentUser && !userData) {
+      // User exists but no profile data
+      setCurrentView('editProfile');
+    } else {
+      // Handle hash-based navigation for auth forms
+      const handleHashChange = () => {
+        const hash = window.location.hash.substring(1);
+        if (hash === 'login') {
+          setCurrentView('login');
+        } else if (hash === 'register') {
+          setCurrentView('register');
+        } else {
+          setCurrentView('home');
+        }
+      };
+
+      window.addEventListener('hashchange', handleHashChange);
+      handleHashChange();
+
+      return () => window.removeEventListener('hashchange', handleHashChange);
     }
+  }, [currentUser, userData]);
 
-    // Handle hash-based navigation for auth forms
-    const handleHashChange = () => {
-      const hash = window.location.hash.substring(1);
-      if (hash === 'login') {
-        setCurrentView('login');
-      } else if (hash === 'register') {
-        setCurrentView('register');
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // Check initial hash
-
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const handleAuthSuccess = (user: UserData) => {
-    setUserData(user);
+  const handleAuthSuccess = () => {
     setCurrentView('userDashboard');
     window.location.hash = '';
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userData');
-    setUserData(null);
     setCurrentView('home');
   };
 
-  const handleProfileSave = (updatedData: UserData) => {
-    setUserData(updatedData);
+  const handleProfileSave = () => {
     setCurrentView('userDashboard');
   };
 
   const renderView = () => {
+    if (currentUser) {
+      switch (currentView) {
+        case 'userDashboard':
+          return userData ? (
+            <UserDashboard 
+              userData={userData} 
+              onLogout={handleLogout}
+              onSubmitGrievance={() => setCurrentView('submit')}
+              onEditProfile={() => setCurrentView('editProfile')}
+            />
+          ) : null;
+        case 'editProfile':
+          return (
+            <ProfileEdit 
+              userData={userData}
+              onBack={() => setCurrentView('userDashboard')}
+              onSave={handleProfileSave}
+            />
+          );
+        case 'submit':
+          return <GrievanceForm onBack={() => setCurrentView('userDashboard')} />;
+        case 'dashboard':
+          return <GrievanceDashboard onBack={() => setCurrentView('userDashboard')} />;
+        default:
+          return userData ? (
+            <UserDashboard 
+              userData={userData} 
+              onLogout={handleLogout}
+              onSubmitGrievance={() => setCurrentView('submit')}
+              onEditProfile={() => setCurrentView('editProfile')}
+            />
+          ) : null;
+      }
+    }
+
     switch (currentView) {
       case 'login':
         return <AuthForm mode="login" onBack={() => setCurrentView('home')} onAuthSuccess={handleAuthSuccess} />;
       case 'register':
         return <AuthForm mode="register" onBack={() => setCurrentView('home')} onAuthSuccess={handleAuthSuccess} />;
-      case 'userDashboard':
-        return userData ? (
-          <UserDashboard 
-            userData={userData} 
-            onLogout={handleLogout}
-            onSubmitGrievance={() => setCurrentView('submit')}
-            onEditProfile={() => setCurrentView('editProfile')}
-          />
-        ) : null;
-      case 'editProfile':
-        return userData ? (
-          <ProfileEdit 
-            userData={userData}
-            onBack={() => setCurrentView('userDashboard')}
-            onSave={handleProfileSave}
-          />
-        ) : null;
-      case 'submit':
-        return <GrievanceForm onBack={() => userData ? setCurrentView('userDashboard') : setCurrentView('home')} />;
-      case 'dashboard':
-        return <GrievanceDashboard onBack={() => userData ? setCurrentView('userDashboard') : setCurrentView('home')} />;
       default:
         return (
           <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50">

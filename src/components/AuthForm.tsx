@@ -6,15 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Heart, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db, assignUserIcon } from '@/lib/firebase';
 
 interface AuthFormProps {
   mode: 'login' | 'register';
   onBack: () => void;
-  onAuthSuccess: (userData: any) => void;
+  onAuthSuccess: () => void;
 }
 
 export const AuthForm = ({ mode, onBack, onAuthSuccess }: AuthFormProps) => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -22,103 +26,85 @@ export const AuthForm = ({ mode, onBack, onAuthSuccess }: AuthFormProps) => {
     partnerEmail: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (mode === 'register') {
-      // Save user data for demo purposes
-      const userData = {
-        email: formData.email,
-        nickname: formData.nickname,
-        partnerEmail: formData.partnerEmail,
-        isLoggedIn: true
-      };
-      localStorage.setItem('userData', JSON.stringify(userData));
-      
-      toast({
-        title: "Registration Successful! 💕",
-        description: "Welcome to your Grievance Portal!",
-      });
-      
-      onAuthSuccess(userData);
-    } else {
-      // Login logic - check if user exists
-      const existingUser = localStorage.getItem('userData');
-      if (existingUser) {
-        const userData = JSON.parse(existingUser);
-        if (userData.email === formData.email) {
-          toast({
-            title: "Welcome Back! 💕",
-            description: "Successfully logged in to your portal.",
-          });
-          onAuthSuccess(userData);
-        } else {
-          toast({
-            title: "Login Failed",
-            description: "Invalid email or password.",
-            variant: "destructive"
-          });
-        }
-      } else {
+    setLoading(true);
+
+    try {
+      if (mode === 'register') {
+        const cred = await createUserWithEmailAndPassword(auth, formData.email.toLowerCase(), formData.password);
+        await setDoc(doc(db, 'users', cred.user.uid), {
+          email: formData.email.toLowerCase(),
+          nickname: formData.nickname,
+          partnerEmail: formData.partnerEmail.toLowerCase(),
+          userIcon: assignUserIcon(cred.user.uid),
+          createdAt: new Date()
+        });
         toast({
-          title: "No Account Found",
-          description: "Please register first.",
-          variant: "destructive"
+          title: "Registration successful! 🎉",
+          description: "Welcome to LoveResolve!",
+        });
+      } else {
+        await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        toast({
+          title: "Welcome back! 💕",
+          description: "You're now logged in.",
         });
       }
+      onAuthSuccess();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex items-center justify-center py-8">
       <div className="container mx-auto px-4 max-w-md">
-        <Button 
-          onClick={onBack}
-          variant="ghost" 
-          className="mb-6 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-        >
-          <ArrowLeft className="mr-2" size={20} />
-          Back to Home
-        </Button>
-
         <Card className="bg-white/90 backdrop-blur-sm border-pink-200 shadow-xl">
           <CardHeader className="text-center pb-6">
-            <div className="mx-auto bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-              <Heart className="text-pink-600" size={24} />
+            <div className="mx-auto bg-pink-100 w-20 h-20 rounded-full flex items-center justify-center mb-4 border-4 border-pink-200">
+              <Heart className="text-red-500" size={32} />
             </div>
             <CardTitle className="text-2xl font-bold text-pink-600">
-              Grievance Portal 💕
+              {mode === 'login' ? '👋 Welcome Back!' : '💕 Join LoveResolve'}
             </CardTitle>
-            {mode === 'login' ? (
-              <p className="text-gray-600 mt-2">Welcome back to your portal</p>
-            ) : (
-              <p className="text-gray-600 mt-2">Create your grievance account</p>
-            )}
           </CardHeader>
           
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700">Email</Label>
+                <Label htmlFor="email" className="text-gray-700 flex items-center">
+                  <span className="mr-2">📧</span>
+                  Email
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  placeholder="Email"
+                  placeholder="your.email@example.com"
                   required
                   className="border-pink-200 focus:border-pink-400"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-700">Password</Label>
+                <Label htmlFor="password" className="text-gray-700 flex items-center">
+                  <span className="mr-2">🔒</span>
+                  Password
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  placeholder="Password"
+                  placeholder="Your password"
                   required
                   className="border-pink-200 focus:border-pink-400"
                 />
@@ -127,7 +113,10 @@ export const AuthForm = ({ mode, onBack, onAuthSuccess }: AuthFormProps) => {
               {mode === 'register' && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="nickname" className="text-gray-700">👤 Nickname</Label>
+                    <Label htmlFor="nickname" className="text-gray-700 flex items-center">
+                      <span className="mr-2">👤</span>
+                      Nickname
+                    </Label>
                     <Input
                       id="nickname"
                       value={formData.nickname}
@@ -139,13 +128,16 @@ export const AuthForm = ({ mode, onBack, onAuthSuccess }: AuthFormProps) => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="partnerEmail" className="text-gray-700">💌 Partner's Email</Label>
+                    <Label htmlFor="partnerEmail" className="text-gray-700 flex items-center">
+                      <span className="mr-2">💌</span>
+                      Partner's Email
+                    </Label>
                     <Input
                       id="partnerEmail"
                       type="email"
                       value={formData.partnerEmail}
                       onChange={(e) => setFormData({...formData, partnerEmail: e.target.value})}
-                      placeholder="Your Partner's Email"
+                      placeholder="partner@example.com"
                       required
                       className="border-pink-200 focus:border-pink-400"
                     />
@@ -155,34 +147,21 @@ export const AuthForm = ({ mode, onBack, onAuthSuccess }: AuthFormProps) => {
 
               <Button 
                 type="submit" 
-                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                disabled={loading}
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                👤 {mode === 'login' ? 'Login' : 'Register'}
+                {loading ? "⏳ Please wait..." : (mode === 'login' ? "🚪 Sign In" : "🎉 Create Account")}
               </Button>
             </form>
 
             <div className="text-center mt-6">
-              {mode === 'login' ? (
-                <p className="text-gray-600">
-                  Don't have an account?{' '}
-                  <button 
-                    onClick={() => window.location.hash = 'register'}
-                    className="text-purple-600 hover:text-purple-700 font-medium"
-                  >
-                    Register here.
-                  </button>
-                </p>
-              ) : (
-                <p className="text-gray-600">
-                  Already have an account?{' '}
-                  <button 
-                    onClick={() => window.location.hash = 'login'}
-                    className="text-purple-600 hover:text-purple-700 font-medium"
-                  >
-                    Login here.
-                  </button>
-                </p>
-              )}
+              <button 
+                onClick={onBack}
+                className="text-pink-600 hover:text-pink-700 font-medium flex items-center justify-center mx-auto"
+              >
+                <ArrowLeft className="mr-2" size={16} />
+                Back to Home
+              </button>
             </div>
           </CardContent>
         </Card>
