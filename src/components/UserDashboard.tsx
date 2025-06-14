@@ -449,7 +449,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-xl">
             <CardContent className="py-6">
               <Button 
@@ -468,6 +468,17 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 text-white py-4 rounded-lg font-semibold text-lg"
               >
                 📬 View Inbox & Outbox
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-indigo-200 dark:border-indigo-700 shadow-xl">
+            <CardContent className="py-6">
+              <Button 
+                onClick={() => window.location.href = '/#documentation'}
+                className="w-full bg-gradient-to-r from-indigo-500 to-teal-500 hover:from-indigo-600 hover:to-teal-600 dark:from-indigo-600 dark:to-teal-600 dark:hover:from-indigo-700 dark:hover:to-teal-700 text-white py-4 rounded-lg font-semibold text-lg"
+              >
+                📖 Documentation
               </Button>
             </CardContent>
           </Card>

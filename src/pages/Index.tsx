@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
@@ -12,12 +11,13 @@ import { ThankYouPage } from "@/components/ThankYouPage";
 import { AllGrievancesDashboard } from "@/components/AllGrievancesDashboard";
 import { GrievanceResponse } from "@/components/GrievanceResponse";
 import { GrievanceView } from "@/components/GrievanceView";
+import { Documentation } from "@/pages/Documentation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { currentUser, userData, logout } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou' | 'allGrievances' | 'inboxOutbox' | 'viewMessage'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou' | 'allGrievances' | 'inboxOutbox' | 'viewMessage' | 'documentation'>('home');
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [messageViewMode, setMessageViewMode] = useState<'respond' | 'view'>('respond');
   const [displayText, setDisplayText] = useState("");
@@ -167,6 +167,8 @@ const Index = () => {
               />
             );
           }
+        case 'documentation':
+          return <Documentation onBack={() => setCurrentView('userDashboard')} />;
         case 'thankYou':
           return <ThankYouPage onBack={() => setCurrentView('userDashboard')} />;
         case 'dashboard':
@@ -229,7 +231,7 @@ const Index = () => {
               </div>
 
               {/* Buttons */}
-              <div className="flex flex-row gap-3 sm:gap-4 justify-center">
+              <div className="flex flex-row gap-3 sm:gap-4 justify-center mb-4">
                 <Button 
                   onClick={() => setCurrentView('login')}
                   className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 sm:px-6 py-2 rounded border border-gray-300 dark:border-gray-600 font-normal shadow-sm hover:shadow-md transition-all duration-200 text-sm sm:text-base"
@@ -243,6 +245,17 @@ const Index = () => {
                   variant="outline"
                 >
                   Register
+                </Button>
+              </div>
+
+              {/* Documentation Link */}
+              <div className="text-center">
+                <Button 
+                  onClick={() => setCurrentView('documentation')}
+                  variant="ghost"
+                  className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 text-sm"
+                >
+                  📖 View Documentation
                 </Button>
               </div>
             </div>
