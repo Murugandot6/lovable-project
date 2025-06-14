@@ -8,11 +8,12 @@ import { AuthForm } from "@/components/AuthForm";
 import { UserDashboard } from "@/components/UserDashboard";
 import { ProfileEdit } from "@/components/ProfileEdit";
 import { ThankYouPage } from "@/components/ThankYouPage";
+import { AllGrievancesDashboard } from "@/components/AllGrievancesDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { currentUser, userData, logout } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou' | 'allGrievances'>('home');
 
   useEffect(() => {
     if (currentUser && userData) {
@@ -91,6 +92,8 @@ const Index = () => {
           return <ThankYouPage onBack={() => setCurrentView('userDashboard')} />;
         case 'dashboard':
           return <GrievanceDashboard onBack={() => setCurrentView('userDashboard')} />;
+        case 'allGrievances':
+          return <AllGrievancesDashboard onBack={() => setCurrentView('userDashboard')} />;
         default:
           return userData ? (
             <UserDashboard 

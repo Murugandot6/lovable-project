@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, User, LogOut, Edit, MessageCircle, Eye, CheckCircle, HeartCrack } from "lucide-react";
+import { Heart, User, LogOut, Edit, MessageCircle, Eye, CheckCircle, HeartCrack, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, addDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -405,127 +405,128 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           </CardContent>
         </Card>
 
-        {/* Grievances Section */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-pink-600 flex items-center">
-                <span className="mr-2">📤</span>
-                Grievances You've Sent ({sentGrievances.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {sentGrievances.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No grievances sent yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {sentGrievances.slice(0, 3).map((grievance, index) => (
-                    <div 
-                      key={grievance.id} 
-                      className={`p-3 rounded-lg border transition-colors ${
-                        index === 0 
-                          ? 'bg-pink-100 border-pink-400 ring-2 ring-pink-300' 
-                          : 'bg-pink-50 border-pink-200 hover:border-pink-300'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-800">{grievance.title}</p>
-                          <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
-                          <p className="text-xs text-gray-500">To: {partnerData?.nickname || grievance.receiverEmail}</p>
-                          {grievance.mood && (
-                            <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
-                          )}
-                          {grievance.responses && grievance.responses.length > 0 && (
-                            <p className="text-xs text-green-600 font-medium">{grievance.responses.length} response(s)</p>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleViewGrievance(grievance, 'view')}
-                            size="sm"
-                            className="bg-pink-500 hover:bg-pink-600 text-white"
-                          >
-                            <Eye className="mr-1" size={14} />
-                            View
-                          </Button>
-                          {grievance.status !== 'resolved' && grievance.responses && grievance.responses.length > 0 && (
-                            <Button
-                              onClick={() => handleMarkResolved(grievance.id)}
-                              size="sm"
-                              className="bg-green-500 hover:bg-green-600 text-white"
-                            >
-                              <CheckCircle className="mr-1" size={14} />
-                              Resolve
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold text-purple-600 flex items-center">
-                <span className="mr-2">📥</span>
-                Grievances You've Received ({receivedGrievances.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {receivedGrievances.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">No grievances received yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {receivedGrievances.slice(0, 3).map((grievance, index) => (
-                    <div 
-                      key={grievance.id} 
-                      className={`p-3 rounded-lg border transition-colors ${
-                        index === 0 
-                          ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-300' 
-                          : 'bg-purple-50 border-purple-200 hover:border-purple-300'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="font-medium text-gray-800">{grievance.title}</p>
-                          <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
-                          <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
-                          {grievance.mood && (
-                            <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
-                          )}
-                        </div>
-                        <Button
-                          onClick={() => handleViewGrievance(grievance, 'respond')}
-                          size="sm"
-                          className="bg-purple-500 hover:bg-purple-600 text-white"
-                        >
-                          <MessageCircle className="mr-1" size={14} />
-                          Respond
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* View All Grievances Button */}
-        <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-xl mb-6">
-          <CardContent className="py-6">
+        {/* Grievances Section with View All Button */}
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold text-gray-800">Your Grievances</h2>
             <Button 
               onClick={handleViewAllGrievances}
-              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-4 rounded-lg font-semibold text-lg"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
             >
-              📊 View All Grievances Dashboard
+              <BarChart3 className="mr-2" size={16} />
+              View All Dashboard
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-pink-600 flex items-center">
+                  <span className="mr-2">📤</span>
+                  Grievances You've Sent ({sentGrievances.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {sentGrievances.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No grievances sent yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {sentGrievances.slice(0, 3).map((grievance, index) => (
+                      <div 
+                        key={grievance.id} 
+                        className={`p-3 rounded-lg border transition-colors ${
+                          index === 0 
+                            ? 'bg-pink-100 border-pink-400 ring-2 ring-pink-300' 
+                            : 'bg-pink-50 border-pink-200 hover:border-pink-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">{grievance.title}</p>
+                            <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
+                            <p className="text-xs text-gray-500">To: {partnerData?.nickname || grievance.receiverEmail}</p>
+                            {grievance.mood && (
+                              <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
+                            )}
+                            {grievance.responses && grievance.responses.length > 0 && (
+                              <p className="text-xs text-green-600 font-medium">{grievance.responses.length} response(s)</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleViewGrievance(grievance, 'view')}
+                              size="sm"
+                              className="bg-pink-500 hover:bg-pink-600 text-white"
+                            >
+                              <Eye className="mr-1" size={14} />
+                              View
+                            </Button>
+                            {grievance.status !== 'resolved' && grievance.responses && grievance.responses.length > 0 && (
+                              <Button
+                                onClick={() => handleMarkResolved(grievance.id)}
+                                size="sm"
+                                className="bg-green-500 hover:bg-green-600 text-white"
+                              >
+                                <CheckCircle className="mr-1" size={14} />
+                                Resolve
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-purple-600 flex items-center">
+                  <span className="mr-2">📥</span>
+                  Grievances You've Received ({receivedGrievances.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {receivedGrievances.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No grievances received yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {receivedGrievances.slice(0, 3).map((grievance, index) => (
+                      <div 
+                        key={grievance.id} 
+                        className={`p-3 rounded-lg border transition-colors ${
+                          index === 0 
+                            ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-300' 
+                            : 'bg-purple-50 border-purple-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-800">{grievance.title}</p>
+                            <p className="text-sm text-gray-600 capitalize">{grievance.status}</p>
+                            <p className="text-xs text-gray-500">From: {grievance.senderNickname}</p>
+                            {grievance.mood && (
+                              <p className="text-xs text-purple-600 font-medium">{grievance.mood}</p>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleViewGrievance(grievance, 'respond')}
+                            size="sm"
+                            className="bg-purple-500 hover:bg-purple-600 text-white"
+                          >
+                            <MessageCircle className="mr-1" size={14} />
+                            Respond
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Submit New Grievance Button */}
         <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-xl">
