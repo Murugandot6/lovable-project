@@ -587,18 +587,6 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           </div>
         </div>
 
-        {/* Send New Message Button */}
-        <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-xl">
-          <CardContent className="py-6">
-            <Button 
-              onClick={onSubmitGrievance}
-              className="w-full bg-pink-500 hover:bg-pink-600 dark:bg-pink-600 dark:hover:bg-pink-700 text-white py-4 rounded-lg font-semibold text-lg"
-            >
-              📝 Send New Message
-            </Button>
-          </CardContent>
-        </Card>
-
         {/* Dialogs */}
         <BrokenHeartDialog 
           isOpen={showBrokenHeartDialog}
