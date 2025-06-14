@@ -68,6 +68,7 @@ const Index = () => {
               onLogout={handleLogout}
               onSubmitGrievance={() => setCurrentView('submit')}
               onEditProfile={() => setCurrentView('editProfile')}
+              onViewAllGrievances={() => setCurrentView('allGrievances')}
             />
           ) : null;
         case 'editProfile':
@@ -97,6 +98,7 @@ const Index = () => {
               onLogout={handleLogout}
               onSubmitGrievance={() => setCurrentView('submit')}
               onEditProfile={() => setCurrentView('editProfile')}
+              onViewAllGrievances={() => setCurrentView('allGrievances')}
             />
           ) : null;
       }

@@ -26,6 +26,7 @@ interface UserDashboardProps {
   onLogout: () => void;
   onSubmitGrievance: () => void;
   onEditProfile: () => void;
+  onViewAllGrievances?: () => void;
 }
 
 interface Grievance {
@@ -43,7 +44,7 @@ interface Grievance {
   type?: string;
 }
 
-export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditProfile }: UserDashboardProps) => {
+export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditProfile, onViewAllGrievances }: UserDashboardProps) => {
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const [sentGrievances, setSentGrievances] = useState<Grievance[]>([]);
@@ -314,6 +315,12 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     }
   };
 
+  const handleViewAllGrievances = () => {
+    if (onViewAllGrievances) {
+      onViewAllGrievances();
+    }
+  };
+
   if (selectedGrievance) {
     if (viewMode === 'respond') {
       return (
@@ -507,6 +514,18 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             </CardContent>
           </Card>
         </div>
+
+        {/* View All Grievances Button */}
+        <Card className="bg-white/80 backdrop-blur-sm border-purple-200 shadow-xl mb-6">
+          <CardContent className="py-6">
+            <Button 
+              onClick={handleViewAllGrievances}
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-4 rounded-lg font-semibold text-lg"
+            >
+              📊 View All Grievances Dashboard
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Submit New Grievance Button */}
         <Card className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-xl">
