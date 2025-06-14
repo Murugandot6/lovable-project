@@ -1,14 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, User, LogOut, Edit, MessageCircle, Eye, CheckCircle } from "lucide-react";
+import { Heart, User, LogOut, Edit, MessageCircle, Eye, CheckCircle, HeartCrack } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { collection, query, where, onSnapshot, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { GrievanceResponse } from "./GrievanceResponse";
 import { GrievanceView } from "./GrievanceView";
+import { BrokenHeartDialog } from "./BrokenHeartDialog";
 
 interface UserData {
   uid: string;
@@ -47,6 +47,7 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
   const [partnerData, setPartnerData] = useState<any>(null);
   const [selectedGrievance, setSelectedGrievance] = useState<Grievance | null>(null);
   const [viewMode, setViewMode] = useState<'respond' | 'view'>('respond');
+  const [showBrokenHeartDialog, setShowBrokenHeartDialog] = useState(false);
 
   useEffect(() => {
     if (!currentUser || !userData || !currentUser.email) {
@@ -188,6 +189,33 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     setSelectedGrievance(null);
   };
 
+  const handleBrokenHeartRequest = async (reason: string) => {
+    try {
+      await addDoc(collection(db, 'brokenHeartRequests'), {
+        requesterEmail: currentUser?.email,
+        requesterNickname: userData.nickname,
+        partnerEmail: userData.partnerEmail,
+        reason: reason,
+        status: 'pending',
+        timestamp: new Date()
+      });
+
+      toast({
+        title: "Broken Heart Request Sent 💔",
+        description: "Your partner will be notified to approve clearing all grievances.",
+      });
+      
+      setShowBrokenHeartDialog(false);
+    } catch (error) {
+      console.error("Error sending broken heart request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send request.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (selectedGrievance) {
     if (viewMode === 'respond') {
       return (
@@ -214,14 +242,24 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-pink-600">Welcome {userData.nickname}!</h1>
-          <Button 
-            onClick={onLogout}
-            variant="outline"
-            className="text-pink-600 border-pink-300 hover:bg-pink-50"
-          >
-            <LogOut className="mr-2" size={16} />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowBrokenHeartDialog(true)}
+              variant="outline"
+              className="text-red-600 border-red-300 hover:bg-red-50"
+            >
+              <HeartCrack className="mr-2" size={16} />
+              Clear All
+            </Button>
+            <Button 
+              onClick={onLogout}
+              variant="outline"
+              className="text-pink-600 border-pink-300 hover:bg-pink-50"
+            >
+              <LogOut className="mr-2" size={16} />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* User Profile Section */}
@@ -276,8 +314,15 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 <p className="text-gray-500 text-center py-4">No grievances sent yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {sentGrievances.slice(0, 3).map((grievance) => (
-                    <div key={grievance.id} className="p-3 bg-pink-50 rounded-lg border border-pink-200 hover:border-pink-300 transition-colors">
+                  {sentGrievances.slice(0, 3).map((grievance, index) => (
+                    <div 
+                      key={grievance.id} 
+                      className={`p-3 rounded-lg border transition-colors ${
+                        index === 0 
+                          ? 'bg-pink-100 border-pink-400 ring-2 ring-pink-300' 
+                          : 'bg-pink-50 border-pink-200 hover:border-pink-300'
+                      }`}
+                    >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <p className="font-medium text-gray-800">{grievance.title}</p>
@@ -330,8 +375,15 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
                 <p className="text-gray-500 text-center py-4">No grievances received yet.</p>
               ) : (
                 <div className="space-y-2">
-                  {receivedGrievances.slice(0, 3).map((grievance) => (
-                    <div key={grievance.id} className="p-3 bg-purple-50 rounded-lg border border-purple-200 hover:border-purple-300 transition-colors">
+                  {receivedGrievances.slice(0, 3).map((grievance, index) => (
+                    <div 
+                      key={grievance.id} 
+                      className={`p-3 rounded-lg border transition-colors ${
+                        index === 0 
+                          ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-300' 
+                          : 'bg-purple-50 border-purple-200 hover:border-purple-300'
+                      }`}
+                    >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <p className="font-medium text-gray-800">{grievance.title}</p>
@@ -369,6 +421,12 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             </Button>
           </CardContent>
         </Card>
+
+        <BrokenHeartDialog 
+          isOpen={showBrokenHeartDialog}
+          onClose={() => setShowBrokenHeartDialog(false)}
+          onSubmit={handleBrokenHeartRequest}
+        />
       </div>
     </div>
   );
