@@ -448,30 +448,46 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
           </CardContent>
         </Card>
 
-        {/* Grievances Section with View All Button */}
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-xl">
+            <CardContent className="py-6">
+              <Button 
+                onClick={onSubmitGrievance}
+                className="w-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 dark:from-pink-600 dark:to-red-600 dark:hover:from-pink-700 dark:hover:to-red-700 text-white py-4 rounded-lg font-semibold text-lg"
+              >
+                📝 Send New Message
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-purple-200 dark:border-purple-700 shadow-xl">
+            <CardContent className="py-6">
+              <Button 
+                onClick={handleViewAllGrievances}
+                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 dark:from-purple-600 dark:to-blue-600 dark:hover:from-purple-700 dark:hover:to-blue-700 text-white py-4 rounded-lg font-semibold text-lg"
+              >
+                📬 View Inbox & Outbox
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Messages Preview */}
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Your Grievances</h2>
-            <Button 
-              onClick={handleViewAllGrievances}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 dark:from-purple-600 dark:to-pink-600 dark:hover:from-purple-700 dark:hover:to-pink-700 text-white"
-            >
-              <BarChart3 className="mr-2" size={16} />
-              View All Dashboard
-            </Button>
-          </div>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Recent Messages</h2>
           
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-pink-200 dark:border-pink-700 shadow-lg">
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-pink-600 dark:text-pink-400 flex items-center">
                   <span className="mr-2">📤</span>
-                  Grievances You've Sent ({sentGrievances.length})
+                  Messages You've Sent ({sentGrievances.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {sentGrievances.length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No grievances sent yet.</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No messages sent yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {sentGrievances.slice(0, 3).map((grievance, index) => (
@@ -527,12 +543,12 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
               <CardHeader>
                 <CardTitle className="text-lg font-semibold text-purple-600 dark:text-purple-400 flex items-center">
                   <span className="mr-2">📥</span>
-                  Grievances You've Received ({receivedGrievances.length})
+                  Messages You've Received ({receivedGrievances.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {receivedGrievances.length === 0 ? (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No grievances received yet.</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">No messages received yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {receivedGrievances.slice(0, 3).map((grievance, index) => (

@@ -2,19 +2,24 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
-import { GrievanceForm } from "@/components/GrievanceForm";
+import { MessageForm } from "@/components/MessageForm";
+import { InboxOutbox } from "@/components/InboxOutbox";
 import { GrievanceDashboard } from "@/components/GrievanceDashboard";
 import { AuthForm } from "@/components/AuthForm";
 import { UserDashboard } from "@/components/UserDashboard";
 import { ProfileEdit } from "@/components/ProfileEdit";
 import { ThankYouPage } from "@/components/ThankYouPage";
 import { AllGrievancesDashboard } from "@/components/AllGrievancesDashboard";
+import { GrievanceResponse } from "@/components/GrievanceResponse";
+import { GrievanceView } from "@/components/GrievanceView";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
   const { currentUser, userData, logout } = useAuth();
-  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou' | 'allGrievances'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'submit' | 'dashboard' | 'login' | 'register' | 'userDashboard' | 'editProfile' | 'thankYou' | 'allGrievances' | 'inboxOutbox' | 'viewMessage'>('home');
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const [messageViewMode, setMessageViewMode] = useState<'respond' | 'view'>('respond');
   const [displayText, setDisplayText] = useState("");
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
 
@@ -93,6 +98,17 @@ const Index = () => {
     setCurrentView('userDashboard');
   };
 
+  const handleViewMessage = (message: any, mode: 'respond' | 'view') => {
+    setSelectedMessage(message);
+    setMessageViewMode(mode);
+    setCurrentView('viewMessage');
+  };
+
+  const handleBackFromMessage = () => {
+    setSelectedMessage(null);
+    setCurrentView('inboxOutbox');
+  };
+
   const renderView = () => {
     if (currentUser) {
       switch (currentView) {
@@ -103,7 +119,7 @@ const Index = () => {
               onLogout={handleLogout}
               onSubmitGrievance={() => setCurrentView('submit')}
               onEditProfile={() => setCurrentView('editProfile')}
-              onViewAllGrievances={() => setCurrentView('allGrievances')}
+              onViewAllGrievances={() => setCurrentView('inboxOutbox')}
             />
           ) : null;
         case 'editProfile':
@@ -116,12 +132,41 @@ const Index = () => {
           );
         case 'submit':
           return (
-            <GrievanceForm 
+            <MessageForm 
               onBack={() => setCurrentView('userDashboard')}
               onSuccess={() => setCurrentView('thankYou')}
               userData={userData}
             />
           );
+        case 'inboxOutbox':
+          return (
+            <InboxOutbox
+              userData={userData}
+              onBack={() => setCurrentView('userDashboard')}
+              onViewMessage={handleViewMessage}
+            />
+          );
+        case 'viewMessage':
+          if (messageViewMode === 'respond') {
+            return (
+              <GrievanceResponse 
+                grievance={selectedMessage} 
+                onBack={handleBackFromMessage} 
+              />
+            );
+          } else {
+            return (
+              <GrievanceView 
+                grievance={selectedMessage} 
+                onBack={handleBackFromMessage}
+                onMarkResolved={async (messageId: string) => {
+                  // Handle mark resolved logic here
+                  setCurrentView('inboxOutbox');
+                }}
+                canMarkResolved={selectedMessage?.senderEmail === currentUser?.email}
+              />
+            );
+          }
         case 'thankYou':
           return <ThankYouPage onBack={() => setCurrentView('userDashboard')} />;
         case 'dashboard':
@@ -135,7 +180,7 @@ const Index = () => {
               onLogout={handleLogout}
               onSubmitGrievance={() => setCurrentView('submit')}
               onEditProfile={() => setCurrentView('editProfile')}
-              onViewAllGrievances={() => setCurrentView('allGrievances')}
+              onViewAllGrievances={() => setCurrentView('inboxOutbox')}
             />
           ) : null;
       }
