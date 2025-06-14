@@ -331,7 +331,7 @@ export const GrievanceDashboard = ({ onBack }: GrievanceDashboardProps) => {
               <Card 
                 key={grievance.id} 
                 className="bg-white/80 backdrop-blur-sm border-pink-200 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105"
-                onClick={() => setSelecte دGrievance(grievance)}
+                onClick={() => setSelectedGrievance(grievance)}
               >
                 <CardHeader>
                   <div className="flex justify-between items-start mb-2">
