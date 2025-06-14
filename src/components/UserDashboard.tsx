@@ -181,12 +181,20 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
     const loadPartnerData = async () => {
       if (userData.partnerEmail) {
         try {
-          console.log("Loading partner data for email:", userData.partnerEmail);
+          console.log("=== PARTNER LOOKUP DEBUG ===");
+          console.log("Raw partner email from userData:", userData.partnerEmail);
+          console.log("Partner email type:", typeof userData.partnerEmail);
+          console.log("Partner email length:", userData.partnerEmail.length);
+          
+          const cleanedEmail = userData.partnerEmail.trim().toLowerCase();
+          console.log("Cleaned partner email:", cleanedEmail);
+          console.log("Cleaned email length:", cleanedEmail.length);
+          
           console.log("Searching in users collection...");
           
           const partnerQuery = query(
             collection(db, 'users'),
-            where('email', '==', userData.partnerEmail.trim().toLowerCase())
+            where('email', '==', cleanedEmail)
           );
           
           const partnerSnapshot = await getDocs(partnerQuery);
@@ -198,16 +206,38 @@ export const UserDashboard = ({ userData, onLogout, onSubmitGrievance, onEditPro
             console.log("Partner nickname:", partner.nickname);
             setPartnerData(partner);
           } else {
-            console.log("No partner found with email:", userData.partnerEmail);
+            console.log("No partner found with email:", cleanedEmail);
             
             // Let's also try to get all users to debug
             const allUsersQuery = query(collection(db, 'users'));
             const allUsersSnapshot = await getDocs(allUsersQuery);
-            console.log("All registered users:");
+            console.log("=== ALL REGISTERED USERS ===");
             allUsersSnapshot.docs.forEach(doc => {
               const user = doc.data();
-              console.log("User:", user.email, "Nickname:", user.nickname);
+              console.log("User email:", user.email, "Type:", typeof user.email, "Length:", user.email?.length);
+              console.log("User nickname:", user.nickname);
+              console.log("Email match check:", user.email === cleanedEmail);
+              console.log("---");
             });
+            
+            // Try alternate search methods
+            console.log("=== TRYING ALTERNATE SEARCHES ===");
+            
+            // Try exact match with original email
+            const exactQuery = query(
+              collection(db, 'users'),
+              where('email', '==', userData.partnerEmail)
+            );
+            const exactSnapshot = await getDocs(exactQuery);
+            console.log("Exact email match results:", exactSnapshot.size);
+            
+            // Try case-sensitive search
+            const originalQuery = query(
+              collection(db, 'users'),
+              where('email', '==', userData.partnerEmail.trim())
+            );
+            const originalSnapshot = await getDocs(originalQuery);
+            console.log("Trimmed only match results:", originalSnapshot.size);
           }
         } catch (error) {
           console.error("Error loading partner data:", error);
