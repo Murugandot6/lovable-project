@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
@@ -32,19 +31,29 @@ const Index = () => {
   ];
 
   useEffect(() => {
+    console.log("=== INDEX COMPONENT DEBUG ===");
+    console.log("currentUser:", currentUser ? currentUser.email : "null");
+    console.log("userData:", userData);
+    console.log("currentView:", currentView);
+
     if (currentUser && userData) {
+      console.log("User authenticated and has data");
       if (!userData.nickname || !userData.partnerEmail) {
+        console.log("User missing profile info, redirecting to edit profile");
         setCurrentView('editProfile');
       } else {
+        console.log("User has complete profile, showing user dashboard");
         setCurrentView('userDashboard');
       }
     } else if (currentUser && !userData) {
-      // User exists but no profile data
+      console.log("User exists but no profile data, redirecting to edit profile");
       setCurrentView('editProfile');
     } else {
+      console.log("No user authenticated, handling hash navigation");
       // Handle hash-based navigation for auth forms
       const handleHashChange = () => {
         const hash = window.location.hash.substring(1);
+        console.log("Hash changed to:", hash);
         if (hash === 'login') {
           setCurrentView('login');
         } else if (hash === 'register') {
@@ -85,16 +94,19 @@ const Index = () => {
   }, [currentSentenceIndex, currentView]);
 
   const handleAuthSuccess = () => {
+    console.log("Auth success, setting view to user dashboard");
     setCurrentView('userDashboard');
     window.location.hash = '';
   };
 
   const handleLogout = async () => {
+    console.log("Handling logout");
     await logout();
     setCurrentView('home');
   };
 
   const handleProfileSave = () => {
+    console.log("Profile saved, redirecting to user dashboard");
     setCurrentView('userDashboard');
   };
 
@@ -110,9 +122,12 @@ const Index = () => {
   };
 
   const renderView = () => {
+    console.log("Rendering view:", currentView);
+    
     if (currentUser) {
       switch (currentView) {
         case 'userDashboard':
+          console.log("Rendering UserDashboard with userData:", !!userData);
           return userData ? (
             <UserDashboard 
               userData={userData} 
@@ -121,7 +136,7 @@ const Index = () => {
               onEditProfile={() => setCurrentView('editProfile')}
               onViewAllGrievances={() => setCurrentView('inboxOutbox')}
             />
-          ) : null;
+          ) : <div>Loading user data...</div>;
         case 'editProfile':
           return (
             <ProfileEdit 
@@ -182,7 +197,7 @@ const Index = () => {
               onEditProfile={() => setCurrentView('editProfile')}
               onViewAllGrievances={() => setCurrentView('inboxOutbox')}
             />
-          ) : null;
+          ) : <div>Loading user data...</div>;
       }
     }
 

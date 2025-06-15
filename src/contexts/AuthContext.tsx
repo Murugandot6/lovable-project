@@ -34,22 +34,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("=== AUTH CONTEXT DEBUG ===");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("Auth state changed. User:", user ? user.email : "null");
       setCurrentUser(user);
       
       if (user) {
+        console.log("User authenticated, fetching user data for UID:", user.uid);
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
+          console.log("User document exists:", userDoc.exists());
           if (userDoc.exists()) {
-            setUserData({ uid: user.uid, ...userDoc.data() } as UserData);
+            const userData = { uid: user.uid, ...userDoc.data() } as UserData;
+            console.log("User data loaded:", userData);
+            setUserData(userData);
+          } else {
+            console.log("No user document found in Firestore");
+            setUserData(null);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+          setUserData(null);
         }
       } else {
+        console.log("No user authenticated");
         setUserData(null);
       }
       
+      console.log("Setting loading to false");
       setLoading(false);
     });
 
@@ -57,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = async () => {
+    console.log("Logging out user");
     await signOut(auth);
   };
 
@@ -66,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     logout
   };
+
+  console.log("AuthContext render - loading:", loading, "currentUser:", !!currentUser, "userData:", !!userData);
 
   return (
     <AuthContext.Provider value={value}>
